@@ -1,7 +1,7 @@
 import React from "react";
 import LearnResourcesHero from "../components/sections/resources/LearnResourcesHero";
 import LearnResourcesCards from "../components/sections/resources/LearnResourcesCards";
-import LearnResourcesCTA from "../components/sections/resources/LearnResourcesCTA";
+import Newsletter from "../components/sections/home/Newsletter";
 
 const LearnResourcesPage: React.FC = () => {
   return (
@@ -9,7 +9,7 @@ const LearnResourcesPage: React.FC = () => {
       <main>
         <LearnResourcesHero />
         <LearnResourcesCards />
-        <LearnResourcesCTA />
+        <Newsletter />
       </main>
     </div>
   );

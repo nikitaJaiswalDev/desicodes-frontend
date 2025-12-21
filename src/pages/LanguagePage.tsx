@@ -1,7 +1,7 @@
 import React from "react";
 import LanguagesHero from "../components/sections/languages/LanguagesHero";
 import LanguageShowcase from "../components/sections/languages/LanguageShowcase";
-import LanguagesCTA from "../components/sections/languages/LanguagesCTA";
+import Newsletter from "../components/sections/home/Newsletter";
 
 const LanguagesPage: React.FC = () => {
   return (
@@ -9,7 +9,7 @@ const LanguagesPage: React.FC = () => {
       <main>
         <LanguagesHero />
         <LanguageShowcase />
-        <LanguagesCTA />
+        <Newsletter />
       </main>
     </div>
   );

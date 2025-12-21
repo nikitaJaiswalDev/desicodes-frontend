@@ -8,11 +8,11 @@ const AboutOurSpace: React.FC = () => {
         {/* Section Header */}
         <div className="text-center mb-14 md:mb-32 max-w-2xl mx-auto px-2">
           <h2 className="font-bold text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-white mb-6 tracking-[1.2px]">
-            Your Space to Learn, Share & Grow
+            Code Without Language Barriers
           </h2>
           <p className="text-xl text-white/40 leading-7 tracking-[0.3px]">
-            Connect with learners, teachers, and creators shaping the future of
-            coding in Assamese, Bodo, Khasi, and Manipuri.
+            Join developers worldwide who are breaking language barriers in programming.
+            Write code in your native language and transpile it seamlessly to Python.
           </p>
         </div>
 
@@ -28,10 +28,11 @@ const AboutOurSpace: React.FC = () => {
                     Our Mission
                   </h3>
                   <p className="text-xs md:text-base text-white/60 leading-[22px] tracking-[0.4px]">
-                    To make programming education accessible in every Indian
-                    language — starting with the Northeast. We aim to break
-                    language barriers so anyone, anywhere, can learn to code
-                    with confidence.
+                    To democratize programming by breaking language barriers.
+                    We empower developers to write code in their native language—whether
+                    it's Hindi, Bengali, Spanish, or any other language—and seamlessly
+                    transpile it to Python. Programming should be accessible to everyone,
+                    regardless of their language background.
                   </p>
                 </div>
                 <div className="hidden lg:block w-1/2">
@@ -54,8 +55,9 @@ const AboutOurSpace: React.FC = () => {
                   The Team
                 </h3>
                 <p className="text-xs md:text-base text-white/60 leading-[22px] tracking-[0.4px]">
-                  A passionate group of engineers, educators, and linguists
-                  working together to build tools that empower regional coders.
+                  A passionate group of engineers, language experts, and compiler
+                  enthusiasts building the future of multilingual programming.
+                  We're dedicated to making code accessible to developers worldwide.
                 </p>
               </div>
 
@@ -67,12 +69,12 @@ const AboutOurSpace: React.FC = () => {
                   </div>
                 </div>
                 <h3 className="md:text-xl font-semibold text-white mb-2 md:mb-4 leading-7">
-                  Press Kit
+                  Open Source
                 </h3>
                 <p className="text-xs md:text-base text-white/60 leading-[22px] tracking-[0.4px]">
-                  Download official brand assets including logos, screenshots,
-                  product previews, and media mentions. Perfect for journalists,
-                  partners, and collaborators.
+                  DesiCodes is built on open-source principles. Contribute to our
+                  transpiler, add support for new languages, or help improve the IDE.
+                  Together, we're building the future of inclusive programming.
                 </p>
               </div>
             </div>

@@ -1,7 +1,7 @@
 import React from "react";
 import AboutHero from "../components/sections/about/AboutHero";
 import AboutOurSpace from "../components/sections/about/AboutOurSpace";
-import AboutPressKit from "../components/sections/about/AboutPressKit";
+// import AboutPressKit from "../components/sections/about/AboutPressKit";
 
 const AboutPage: React.FC = () => {
   return (
@@ -9,7 +9,7 @@ const AboutPage: React.FC = () => {
       <main>
         <AboutHero />
         <AboutOurSpace />
-        <AboutPressKit />
+        {/* <AboutPressKit /> */}
       </main>
     </div>
   );

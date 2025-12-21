@@ -1,11 +1,33 @@
-import { Play, Maximize } from "lucide-react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import {
+  Play,
+  Square,
+  FolderOpen,
+  FileCode,
+  Terminal as TerminalIcon,
+  ChevronRight,
+  X,
+  Maximize2,
+  Minimize2,
+  ArrowRight,
+  ArrowDown
+} from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { executeCode } from "../../../lib/api";
+import MonacoEditor from "@monaco-editor/react";
+
 
 const Editor = ({ bg }: { bg?: boolean }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const defaultSnippets: Record<string, string> = {
+    "English": `# English Program
+print "Hello, World!"
+if 5 > 3 then
+  print "5 is greater"
+else
+  print "3 is greater"
+end`,
     "Assamese": `# অসমীয়া প্ৰোগ্ৰাম
 লিখা "নমস্কাৰ, বিশ্ব!"
 যদি ৫ > ৩ তেন্তে
@@ -28,7 +50,7 @@ const Editor = ({ bg }: { bg?: boolean }) => {
   लेख "३ देरसिन"
 जोबनाय`,
     "Manipuri": `# মৈতৈ প্রোগ্রাম
-ইবা "খুরুমজরি, পৃথিবী!"
+ইবা "খুরুমজरি, পৃথিবী!"
 করিগুম্বা ৫ > ৩ ওইরবদি
   ইবা "৫ চাউই"
 নত্রবদি
@@ -57,30 +79,45 @@ anih loh chuan
 tawp`
   };
 
-  const [language, setLanguage] = useState("Assamese");
-  const [code, setCode] = useState(defaultSnippets["Assamese"]);
+  const [language, setLanguage] = useState("English");
+  const [code, setCode] = useState(defaultSnippets["English"]);
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [outputHeight, setOutputHeight] = useState(250);
+  const [outputWidth, setOutputWidth] = useState(35); // Percentage of container width when on right
+  const [isDragging, setIsDragging] = useState(false);
+  const [terminalPosition, setTerminalPosition] = useState<'bottom' | 'right'>('bottom');
+  const [autoRun, setAutoRun] = useState(true); // Auto-run enabled by default
+  const containerRef = useRef<HTMLDivElement>(null);
+  const autoRunTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const selectedLang = e.target.value;
-    setLanguage(selectedLang);
-    setCode(defaultSnippets[selectedLang] || "");
+  // Read language from URL query parameter on mount
+  useEffect(() => {
+    const langFromUrl = searchParams.get('lang');
+    if (langFromUrl && defaultSnippets[langFromUrl]) {
+      setLanguage(langFromUrl);
+      setCode(defaultSnippets[langFromUrl]);
+    }
+  }, []); // Run only once on mount
+
+  const handleLanguageChange = (newLang: string) => {
+    setLanguage(newLang);
+    setCode(defaultSnippets[newLang] || "");
     setOutput("");
   };
 
   const handleRunCode = async () => {
     setLoading(true);
+    setOutput("Running...");
     try {
       const result = await executeCode(language, code);
       setOutput(result.output);
     } catch (e: any) {
-      // Backend returns 403 with detailed message for limits
-      // The API wrapper might throw the message directly or a JSON object string
       let msg = e.message || "";
       try {
-        // Try to parse if it's a JSON string error
         const parsed = JSON.parse(msg);
         if (parsed.detail) msg = parsed.detail;
       } catch (err) {
@@ -89,120 +126,361 @@ tawp`
 
       if (msg.includes("limit reached")) {
         setShowLimitModal(true);
+        setOutput("");
       } else {
-        setOutput(`Error executing code: ${msg}`);
+        setOutput(`Error: ${msg}`);
       }
     } finally {
       setLoading(false);
     }
   };
 
+  // Auto-run effect: Runs code automatically after user stops typing for 2 seconds
+  useEffect(() => {
+    // Clear any existing timer
+    if (autoRunTimerRef.current) {
+      clearTimeout(autoRunTimerRef.current);
+    }
+
+    // Only auto-run if the feature is enabled and there's code
+    if (autoRun && code.trim()) {
+      // Set a new timer to run code after 2 seconds of inactivity
+      autoRunTimerRef.current = setTimeout(() => {
+        handleRunCode();
+      }, 2000);
+    }
+
+    // Cleanup function
+    return () => {
+      if (autoRunTimerRef.current) {
+        clearTimeout(autoRunTimerRef.current);
+      }
+    };
+  }, [code, autoRun]); // Re-run when code or autoRun setting changes
+
+  // Terminal resize handler
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
+
+      const container = containerRef.current;
+      const containerRect = container.getBoundingClientRect();
+
+      if (terminalPosition === 'bottom') {
+        // Calculate height from the mouse Y position to the bottom of the container
+        const offsetFromTop = e.clientY - containerRect.top;
+        const availableHeight = containerRect.height;
+        const newHeight = availableHeight - offsetFromTop;
+
+        // Allow terminal to be between 100px and 80% of container height
+        const minHeight = 100;
+        const maxHeight = availableHeight * 0.8;
+
+        setOutputHeight(Math.max(minHeight, Math.min(maxHeight, newHeight)));
+      } else {
+        // Calculate percentage width from the mouse X position
+        const offsetFromLeft = e.clientX - containerRect.left;
+        const availableWidth = containerRect.width;
+        const widthFromRight = availableWidth - offsetFromLeft;
+        const widthPercentage = (widthFromRight / availableWidth) * 100;
+
+        // Allow terminal to be between 20% and 60% of container width
+        const minWidthPercent = 20;
+        const maxWidthPercent = 60;
+
+        setOutputWidth(Math.max(minWidthPercent, Math.min(maxWidthPercent, widthPercentage)));
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, terminalPosition]);
+
+  const languageMap: Record<string, string> = {
+    "English": "English",
+    "Assamese": "অসমীয়া",
+    "Bengali": "বাংলা",
+    "Bodo": "बड़ो",
+    "Manipuri": "Meitei",
+    "Khasi": "Khasi",
+    "Garo": "Garo",
+    "Mizo": "Mizo"
+  };
+
   return (
-    <div
-      className={`w-full min-h-screen ${bg && "bg-[#1E1E1E]"
-        } flex items-center justify-center py-6 md:py-10 px-4`}
-    >
-      {/* Background Gradient */}
-      <div
-        className="relative w-full min-h-[650px] max-w-7xl rounded-xl"
-        style={{
-          background:
-            "linear-gradient(99.98deg, #DCF9FF 0%, #621DBA 48.44%, #04001C 95.31%)",
-        }}
-      >
-        {/* Top Header Bar */}
-        <div className="flex justify-between pt-4 px-4 lg:pt-8 lg:px-12">
-          {/* Language Dropdown */}
-          <div className="">
-            <span className="text-[#374151] text-xs mr-2">Language: </span>
-            <select
-              value={language}
-              onChange={handleLanguageChange}
-              className="text-black bg-white text-sm p-2 rounded-lg border border-[#D1D5DB]"
-            >
-              <option value="Assamese">Assamese (অসমীয়া)</option>
-              <option value="Bengali">Bengali (বাংলা)</option>
-              <option value="Bodo">Bodo (बड़ो)</option>
-              <option value="Manipuri">Manipuri (Meitei)</option>
-              <option value="Khasi">Khasi</option>
-              <option value="Garo">Garo</option>
-              <option value="Mizo">Mizo</option>
-            </select>
-          </div>
-          <div className="flex flex-row gap-4 items-center">
-            <button
-              onClick={handleRunCode}
-              disabled={loading}
-              className={`flex items-center gap-2 bg-[#4F46E5] text-white text-xs px-1 md:px-4 py-2 rounded-lg border border-white/20 hover:bg-[#4338ca] transition-colors ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
-            >
-              <Play className="w-4 h-4" />
-              {loading ? 'Running...' : 'Run Code'}
-            </button>
-            <button className="flex items-center gap-2 bg-[#00000000] text-white/40 text-xs">
-              <Maximize className="w-4 h-4" />
-              <span className="hidden md:block">Full IDE</span>
-            </button>
-          </div>
-        </div>
-        {/* Main Layout */}
-        <div className="relative flex flex-col items-center lg:flex-row w-full px-4 lg:px-8 mt-6 md:mt-24 pb-10 min-h-[350px] overflow-visible">
-          {/* Left Input Panel */}
-          <div className="w-full lg:w-[35%] bg-white/10 backdrop-blur-lg border border-white/10 rounded-2xl text-white/80 h-80 md:h-[400px]">
-            <textarea
-              value={code}
-              onChange={(e) => setCode(e.target.value)}
-              className="w-full h-full bg-transparent p-6 text-sm leading-7 resize-none focus:outline-none font-mono"
-              spellCheck="false"
-            />
+    <div className={`w-full ${isFullScreen ? 'fixed inset-0 z-50' : 'h-full'} ${bg && !isFullScreen && "bg-[#1E1E1E]"} flex flex-col overflow-hidden`}>
+      {/* IDE Container */}
+      <div className={`flex-1 flex flex-col ${isFullScreen ? '' : 'w-full'} bg-[#1E1E1E] overflow-hidden`}>
+
+        {/* Top Menu Bar */}
+        <div className="h-12 bg-[#2D2D30] border-b border-[#3E3E42] flex items-center px-4 gap-6">
+          <div className="flex items-center gap-2">
+            <FileCode className="w-5 h-5 text-[#7001FE]" />
+            <span className="text-white font-semibold text-sm">DesiCode IDE</span>
           </div>
 
-          {/* Right Output Panel */}
-          <div className="relative self-center w-full lg:w-[65%] flex justify-center mt-4 lg:mt-0">
+          <div className="flex-1"></div>
+
+          <button
+            onClick={() => setIsFullScreen(!isFullScreen)}
+            className="p-2 hover:bg-[#3E3E42] rounded transition-colors text-[#CCCCCC]"
+            title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
+          >
+            {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          </button>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 flex overflow-hidden" ref={containerRef}>
+
+          {/* Activity Bar */}
+          <div className="w-12 bg-[#333333] border-r border-[#3E3E42] flex flex-col items-center py-4 gap-4">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className={`p-2 hover:bg-[#3E3E42] rounded transition-colors ${sidebarOpen ? 'text-white' : 'text-[#858585]'}`}
+              title="Explorer"
+            >
+              <FolderOpen className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Sidebar */}
+          {sidebarOpen && (
+            <div className="w-64 bg-[#252526] border-r border-[#3E3E42] flex flex-col">
+              <div className="p-3 border-b border-[#3E3E42]">
+                <h2 className="text-[#CCCCCC] text-xs font-semibold uppercase tracking-wider">Explorer</h2>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-2">
+                <div className="mb-2">
+                  <div className="flex items-center gap-1 text-white text-sm font-medium mb-2 px-2 py-1">
+                    <ChevronRight className="w-4 h-4" />
+                    <span>My Project</span>
+                  </div>
+                  <div className="ml-4">
+                    {Object.keys(languageMap).map((lang) => (
+                      <button
+                        key={lang}
+                        onClick={() => handleLanguageChange(lang)}
+                        className={`w-full text-left px-3 py-1.5 text-sm rounded transition-colors flex items-center gap-2 ${language === lang
+                          ? 'bg-[#37373D] text-white'
+                          : 'text-[#CCCCCC] hover:bg-[#2A2D2E]'
+                          }`}
+                      >
+                        <FileCode className="w-4 h-4 text-[#7001FE]" />
+                        {lang}.dsc
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 border-t border-[#3E3E42]">
+                <div className="text-xs text-[#858585]">
+                  <div className="mb-1">Language: <span className="text-[#7001FE] font-medium">{languageMap[language]}</span></div>
+                  <div>Lines: {code.split('\n').length}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Editor Area - Flex direction changes based on terminal position */}
+          <div className={`flex-1 flex ${terminalPosition === 'bottom' ? 'flex-col' : 'flex-row'} bg-[#1E1E1E]`}>
+
+            {/* Editor Section */}
+            <div className="flex-1 flex flex-col min-w-0 min-h-0">
+
+              {/* Tab Bar */}
+              <div className="h-9 bg-[#2D2D30] border-b border-[#3E3E42] flex items-center px-2 gap-1">
+                <div className="flex items-center gap-2 px-3 py-1 bg-[#1E1E1E] border-t-2 border-[#7001FE] text-white text-sm">
+                  <FileCode className="w-4 h-4 text-[#7001FE]" />
+                  <span>{language}.dsc</span>
+                </div>
+              </div>
+
+              {/* Toolbar */}
+              <div className="h-10 bg-[#2D2D30] border-b border-[#3E3E42] flex items-center px-4 gap-3">
+                <button
+                  onClick={handleRunCode}
+                  disabled={loading}
+                  className={`flex items-center gap-2 px-3 py-1.5 rounded transition-all ${loading
+                    ? 'bg-[#858585] cursor-not-allowed'
+                    : 'bg-[#0E639C] hover:bg-[#1177BB]'
+                    } text-white text-sm font-medium`}
+                >
+                  {loading ? (
+                    <>
+                      <Square className="w-4 h-4" />
+                      <span>Running...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="w-4 h-4" fill="currentColor" />
+                      <span>Run Code</span>
+                    </>
+                  )}
+                </button>
+
+                <div className="h-5 w-px bg-[#3E3E42]"></div>
+
+                {/* Auto-Run Toggle */}
+                <button
+                  onClick={() => setAutoRun(!autoRun)}
+                  className={`px-3 py-1.5 rounded flex items-center gap-2 transition-colors ${autoRun
+                    ? 'bg-[#7001FE] hover:bg-[#6001E0] text-white'
+                    : 'bg-[#3E3E42] hover:bg-[#4E4E52] text-[#CCCCCC]'
+                    } text-xs font-medium`}
+                  title={autoRun ? 'Auto-run is ON' : 'Auto-run is OFF'}
+                >
+                  <div className={`w-2 h-2 rounded-full ${autoRun ? 'bg-green-400 animate-pulse' : 'bg-gray-500'
+                    }`}></div>
+                  <span>Auto-Run</span>
+                </button>
+
+                <div className="h-5 w-px bg-[#3E3E42]"></div>
+
+                <div className="text-[#CCCCCC] text-xs">
+                  {language} - {languageMap[language]}
+                </div>
+              </div>
+
+              {/* Monaco Editor */}
+              <div className="flex-1 overflow-hidden">
+                <MonacoEditor
+                  height="100%"
+                  defaultLanguage="python"
+                  theme="vs-dark"
+                  value={code}
+                  onChange={(value: string | undefined) => setCode(value || "")}
+                  options={{
+                    fontSize: 14,
+                    fontFamily: "'Fira Code', 'Cascadia Code', 'JetBrains Mono', Consolas, monospace",
+                    minimap: { enabled: true },
+                    scrollBeyondLastLine: false,
+                    wordWrap: "on",
+                    lineNumbers: "on",
+                    renderWhitespace: "selection",
+                    bracketPairColorization: { enabled: true },
+                    guides: {
+                      indentation: true,
+                      bracketPairs: true
+                    },
+                    padding: { top: 16, bottom: 16 },
+                    smoothScrolling: true,
+                    cursorBlinking: "smooth",
+                    cursorSmoothCaretAnimation: "on",
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Resize Handle - Different direction based on terminal position */}
             <div
-              className="
-      bg-black/60 rounded-2xl
-      p-6 text-white/50 min-h-88 md:min-h-[430px] max-h-[430px] w-full border border-[#8F8D9133] overflow-y-auto
-      lg:absolute lg:-right-6 lg:-translate-y-1/2   /* overflow without adding gap */
-      
-    "
+              onMouseDown={() => setIsDragging(true)}
+              className={`${terminalPosition === 'bottom'
+                ? 'h-1.5 w-full cursor-ns-resize'
+                : 'w-1.5 h-full cursor-ew-resize'
+                } bg-[#3E3E42] hover:bg-[#7001FE] transition-colors flex items-center justify-center group select-none`}
+            >
+              <div className={`${terminalPosition === 'bottom'
+                ? 'w-16 h-1'
+                : 'w-1 h-16'
+                } bg-[#858585] group-hover:bg-white rounded-full transition-colors`}></div>
+            </div>
+
+            {/* Output Panel - Size depends on position */}
+            <div
+              className="bg-[#1E1E1E] border-[#3E3E42] flex flex-col min-h-0 min-w-0 flex-shrink-0"
               style={{
-                backdropFilter: "blur(72px)",
-                boxShadow: `
-        0px 0.5px 0px 1px #FFFFFF4D inset,
-        0px 4px 40px 8px #00000066,
-        0px 0px 0px 0.5px #000000CC
-      `,
+                [terminalPosition === 'bottom' ? 'height' : 'width']: terminalPosition === 'bottom' ? `${outputHeight}px` : `${outputWidth}%`,
+                borderTopWidth: terminalPosition === 'bottom' ? '1px' : '0',
+                borderLeftWidth: terminalPosition === 'right' ? '1px' : '0'
               }}
             >
-              {output ? (
-                <pre className="font-mono text-sm whitespace-pre-wrap text-green-400">
-                  {output}
-                </pre>
-              ) : (
-                <p># Output will appear here...</p>
-              )}
+              <div className={`h-9 bg-[#2D2D30] border-b border-[#3E3E42] flex items-center ${terminalPosition === 'right' ? 'px-2 gap-1' : 'px-4 gap-4'} flex-shrink-0`}>
+                <div className={`flex items-center gap-2 text-white ${terminalPosition === 'right' ? 'text-xs' : 'text-sm'} font-medium`}>
+                  <TerminalIcon className="w-4 h-4 flex-shrink-0" />
+                  <span className="truncate">Output</span>
+                </div>
+                <div className="flex-1 min-w-0"></div>
+
+                {/* Toggle Terminal Position Button */}
+                <button
+                  onClick={() => setTerminalPosition(terminalPosition === 'bottom' ? 'right' : 'bottom')}
+                  className="p-1 hover:bg-[#3E3E42] rounded transition-colors text-[#CCCCCC] flex-shrink-0"
+                  title={terminalPosition === 'bottom' ? 'Move to Right' : 'Move to Bottom'}
+                >
+                  {terminalPosition === 'bottom' ? <ArrowRight className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
+                </button>
+
+                {output && (
+                  <button
+                    onClick={() => setOutput("")}
+                    className="p-1 hover:bg-[#3E3E42] rounded transition-colors text-[#CCCCCC] flex-shrink-0"
+                    title="Clear Output"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className={`flex-1 overflow-y-auto overflow-x-hidden ${terminalPosition === 'right' ? 'p-2' : 'p-4'} font-mono ${terminalPosition === 'right' ? 'text-xs' : 'text-sm'} min-h-0`}>
+                {output ? (
+                  <pre className={`whitespace-pre-wrap break-words ${output.startsWith('Error') ? 'text-red-400' : 'text-green-400'}`}>
+                    {output}
+                  </pre>
+                ) : (
+                  <div className="text-[#858585] italic text-xs">
+                    {terminalPosition === 'right' ? 'Output...' : 'Output will appear here after running your code...'}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Status Bar */}
+        <div className="h-6 bg-[#007ACC] flex items-center px-4 gap-4 text-white text-xs">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+            <span>Ready</span>
+          </div>
+          <div>Lines: {code.split('\n').length}</div>
+          <div>Language: {language}</div>
+          <div className="flex-1"></div>
+          <div>DesiCode v1.0.0</div>
+        </div>
       </div>
 
+      {/* Limit Modal */}
       {showLimitModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#1F2937] p-8 rounded-2xl max-w-md text-center border border-gray-700 shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#2D2D30] p-8 rounded-lg max-w-md text-center border border-[#3E3E42] shadow-2xl">
             <h3 className="text-xl text-white font-bold mb-4">Run Limit Reached</h3>
-            <p className="text-gray-300 mb-6">
+            <p className="text-[#CCCCCC] mb-6">
               You have used your 2 free code runs. Upgrade to Pro or Enterprise to continue coding without limits.
             </p>
             <div className="flex justify-center gap-4">
               <button
                 onClick={() => setShowLimitModal(false)}
-                className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                className="px-6 py-2 text-[#CCCCCC] hover:text-white hover:bg-[#3E3E42] rounded transition-colors"
               >
                 Cancel
               </button>
               <button
                 onClick={() => navigate('/pricing')}
-                className="bg-[#7001FE] text-white px-6 py-2 rounded-lg hover:bg-[#5a01cc] transition-colors shadow-lg shadow-purple-500/20"
+                className="bg-[#7001FE] text-white px-6 py-2 rounded hover:bg-[#5a01cc] transition-colors shadow-lg shadow-purple-500/20"
               >
                 View Plans
               </button>

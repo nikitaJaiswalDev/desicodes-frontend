@@ -9,28 +9,28 @@ interface ResourceCard {
 const LearnResourcesCards: React.FC = () => {
   const resourceCards: ResourceCard[] = [
     {
-      icon: "📓",
-      title: "Interactive Notebooks",
+      icon: "🌐",
+      title: "Multilingual IDE",
       description:
-        "You can run lessons directly in your browser with no installations or setup required, making it easy to start learning instantly from any device. Everything is preconfigured, so you can focus entirely on understanding the concepts and writing code.",
+        "Write code in any language - Hindi, Bengali, Assamese, Spanish, or your native language. Our intelligent IDE provides syntax highlighting, auto-completion, and instant error detection, making coding in your language feel natural and intuitive.",
     },
     {
-      icon: "🎓",
-      title: "Teacher Guides",
+      icon: "⚡",
+      title: "Instant Transpilation",
       description:
-        "Our curriculum packs and lesson plans make it easy for teachers to introduce coding in Assamese, Bodo, Khasi, and Manipuri, with simple resources that fit smoothly into any classroom.",
+        "See your native language code convert to Python in real-time as you type. Our advanced transpiler preserves your logic and intent while generating clean, efficient Python code that follows best practices and conventions.",
     },
     {
-      icon: "💻",
-      title: "Sample Programs",
+      icon: "�",
+      title: "Code Examples & Templates",
       description:
-        "Explore 50+ ready-to-run examples in each language, covering everything from basics to real-world logic. Each example opens instantly in the browser, so you can learn by observing, modifying, and experimenting.",
+        "Explore 50+ ready-to-run code examples covering fundamentals to advanced concepts. Each example is available in multiple languages, so you can learn programming concepts in the language you're most comfortable with.",
     },
     {
-      icon: "📦",
-      title: "Curriculum Packs",
+      icon: "🏆",
+      title: "Certificates & Achievements",
       description:
-        "Download structured learning materials, including worksheets and guided modules, to support deeper learning at your own pace. Access is available after registration to ensure secure and personalized resources for every learner.",
+        "Complete coding challenges and earn certificates that showcase your multilingual programming skills. Track your progress, unlock achievements, and share your accomplishments with the global developer community.",
     },
   ];
 
@@ -42,9 +42,8 @@ const LearnResourcesCards: React.FC = () => {
           {resourceCards.map((card, index) => (
             <div
               key={index}
-              className={`group relative rounded-xl p-4 md:p-8 md:py-8 md:px-20 bg-[rgba(255,255,255,0.1)] ${
-                index % 2 === 1 ? "md:translate-y-16" : ""
-              }`}
+              className={`group relative rounded-xl p-4 md:p-8 md:py-8 md:px-20 bg-[rgba(255,255,255,0.1)] ${index % 2 === 1 ? "md:translate-y-16" : ""
+                }`}
             >
               <div className="relative z-10">
                 {/* Icon */}

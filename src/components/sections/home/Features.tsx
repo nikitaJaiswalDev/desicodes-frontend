@@ -44,14 +44,53 @@ const features: FeatureCard[] = [
   },
 ];
 
-const FeatureCardComponent: React.FC<{ feature: FeatureCard }> = ({
+const FeatureCardComponent: React.FC<{ feature: FeatureCard; index: number }> = ({
   feature,
+  index,
 }) => {
+  const [isVisible, setIsVisible] = React.useState(false);
+  const cardRef = React.useRef<HTMLDivElement>(null);
+
+  // Intersection Observer for scroll animations
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsVisible(true);
+          }
+        });
+      },
+      {
+        threshold: 0.1,
+        rootMargin: '50px',
+      }
+    );
+
+    if (cardRef.current) {
+      observer.observe(cardRef.current);
+    }
+
+    return () => {
+      if (cardRef.current) {
+        observer.unobserve(cardRef.current);
+      }
+    };
+  }, []);
+
   return (
-    <div className="relative rounded-xl overflow-hidden">
+    <div
+      ref={cardRef}
+      style={{ transitionDelay: `${index * 150}ms` }}
+      className={`relative rounded-xl overflow-hidden group cursor-pointer
+        transform transition-all duration-700 ease-out
+        hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/30
+        ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'}
+      `}
+    >
       {/* Background Gradient with Blur Effect */}
       <div
-        className="absolute -inset-20 blur-xl filter"
+        className="absolute -inset-20 blur-xl filter transition-all duration-500 group-hover:blur-2xl"
         style={{
           background: `linear-gradient(90deg, rgba(5, 1, 13, 0.6) 0%, rgba(5, 1, 13, 0.6) 100%), ${feature.gradient}`,
         }}
@@ -60,22 +99,26 @@ const FeatureCardComponent: React.FC<{ feature: FeatureCard }> = ({
       {/* Content */}
       <div className="relative z-10 h-full flex flex-col p-4 md:py-7 md:px-14">
         {/* Icon */}
-        <div className="text-lg md:text-xl lg:text-[28px] leading-[39.2px] mb-2 md:mb-4 opacity-90">
+        <div className="text-lg md:text-xl lg:text-[28px] leading-[39.2px] mb-2 md:mb-4 opacity-90 
+          transform transition-all duration-300 group-hover:scale-110 group-hover:rotate-6">
           {feature.icon}
         </div>
 
         {/* Text Content */}
         <div className="flex flex-col gap-4 flex-1">
           <div className="flex flex-col gap-1">
-            <h3 className="text-[18px] font-semibold text-white leading-[1.3]">
+            <h3 className="text-[18px] font-semibold text-white leading-[1.3] 
+              transition-colors duration-300 group-hover:text-purple-200">
               {feature.title}
             </h3>
-            <p className="text-sm md:text-base font-medium text-white/60 leading-[22.5px] tracking-[0.4px]">
+            <p className="text-sm md:text-base font-medium text-white/60 leading-[22.5px] tracking-[0.4px]
+              transition-colors duration-300 group-hover:text-white/80">
               {feature.subtitle}
             </p>
           </div>
 
-          <p className="text-xs md:text-[14px] text-white/60 leading-[22.5px] tracking-[0.4px] flex-1">
+          <p className="text-xs md:text-[14px] text-white/60 leading-[22.5px] tracking-[0.4px] flex-1
+            transition-colors duration-300 group-hover:text-white/70">
             {feature.description}
           </p>
         </div>
@@ -106,7 +149,7 @@ const Features: React.FC = () => {
         {/* Feature Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {features.map((feature, idx) => {
-            return <FeatureCardComponent key={idx} feature={feature} />;
+            return <FeatureCardComponent key={idx} feature={feature} index={idx} />;
           })}
         </div>
       </div>

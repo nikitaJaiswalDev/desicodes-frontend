@@ -2,10 +2,14 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const languages = [
+  { native: "English", english: "English" },
   { native: "অসমীয়া", english: "Assamese" },
+  { native: "বাংলা", english: "Bengali" },
   { native: "बड़ो", english: "Bodo" },
-  { native: "Khasi", english: "Khasi" },
   { native: "মৈতৈলোন্", english: "Manipuri" },
+  { native: "Khasi", english: "Khasi" },
+  { native: "Garo", english: "Garo" },
+  { native: "Mizo", english: "Mizo" },
 ];
 
 const Hero: React.FC = () => {
@@ -85,8 +89,8 @@ const Hero: React.FC = () => {
 
           {/* Subtitle */}
           <p className="text-base md:text-xl leading-[1.3] text-white/40 mx-auto">
-            DesiCodes lets you learn programming in Assamese, Bodo, Khasi, and
-            Manipuri — directly from your browser. No installations, no setup.
+            DesiCodes lets you learn programming in English, Assamese, Bengali, Bodo,
+            Manipuri, Khasi, Garo, and Mizo — directly from your browser. No installations, no setup.
             Just code, run, and explore.
           </p>
         </div>
@@ -94,7 +98,7 @@ const Hero: React.FC = () => {
         {/* CTA Button */}
         <div className="my-6">
           {/* Main Button */}
-          <button onClick={handleGetStarted} className="relative bg-white/90 border-3 border-white/30 rounded-md px-16 py-2 text-base font-medium text-[#0D0D0D] tracking-[0.2px] hover:bg-white hover:border-white/50 transition-all duration-300">
+          <button onClick={handleGetStarted} className="relative bg-white/90 border-3 border-white/30 rounded-md px-16 py-2 text-base font-medium text-[#0D0D0D] tracking-[0.2px] hover:bg-white hover:border-white/50 transition-all duration-300 cursor-pointer">
             Try it in your language
           </button>
         </div>

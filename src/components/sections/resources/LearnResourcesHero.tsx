@@ -46,7 +46,7 @@ const LearnResourcesHero: React.FC = () => {
              bg-[rgba(255,255,255,0.9)]
              border-[3px] border-[rgba(255,255,255,0.3)]
              text-[#0D0D0D] font-medium rounded-md
-             transition-all duration-300 transform shadow-lg hover:shadow-xl"
+             transition-all duration-300 transform shadow-lg hover:shadow-xl cursor-pointer"
         >
           Start Learning
         </button>

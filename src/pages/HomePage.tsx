@@ -25,11 +25,11 @@ const HomePage: React.FC = () => {
         <HowItWorks />
 
         {/* Try It Now Section */}
-        <div className="text-center max-w-4xl mx-auto">
+        <div className="text-center max-w-4xl mx-auto px-4">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-semibold text-white leading-[57.2px] md:mb-6">
             Try It Right Now
           </h2>
-          <p className="text-sm md:text-xl text-white/60 leading-7 tracking-[0.3px] mx-auto px-2 lg:px-8">
+          <p className="text-sm md:text-xl text-white/60 leading-7 tracking-[0.3px] mx-auto px-2 lg:px-8 mb-4">
             Write code in your native language and see it transpile to Python
             instantly.Write in your preferred programming language and watch it
             seamlessly convert into clean, executable Python instantly. No more
@@ -37,7 +37,11 @@ const HomePage: React.FC = () => {
             write, transpile, and run.
           </p>
         </div>
-        <Editor bg={false} />
+
+        {/* Editor with padding */}
+        <div className="px-4 md:px-8 lg:px-16">
+          <Editor bg={false} />
+        </div>
 
         {/* Newsletter/CTA Section */}
         <Newsletter />
