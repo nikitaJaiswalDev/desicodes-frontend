@@ -18,6 +18,8 @@ import AuthPage from "./pages/AuthPage";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
 import SocialCallbackPage from "./pages/SocialCallbackPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsPage from "./pages/TermsPage";
 
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -61,6 +63,8 @@ const App: React.FC = () => {
             <Route path="community" element={<CommunityPage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="pricing" element={<PricingPage />} />
+            <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
+            <Route path="terms" element={<TermsPage />} />
 
             <Route path="auth" element={<AuthPage />} />
             <Route path="login" element={<AuthPage />} />

@@ -24,8 +24,8 @@ const platformLinks = [
 const companyLinks = [
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
-  { label: "Privacy", href: "#privacy" },
-  { label: "Terms", href: "#terms" },
+  { label: "Privacy Policy", href: "/privacy-policy" },
+  { label: "Terms & Conditions", href: "/terms" },
 ];
 
 const Footer: React.FC = () => {
@@ -47,9 +47,9 @@ const Footer: React.FC = () => {
                 desicodes
               </h3>
               <p className="text-[14px] text-gray-400 leading-5">
-                A multilingual programming platform for Northeast India,
+                Break language barriers in programming.
                 <br className="max-md:hidden" />
-                empowering students to learn coding in their native languages.
+                Write code in your native language and transpile it to Python seamlessly.
               </p>
             </div>
 
