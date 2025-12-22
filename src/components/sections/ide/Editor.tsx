@@ -1,7 +1,6 @@
 import {
   Play,
   Square,
-  FolderOpen,
   FileCode,
   Terminal as TerminalIcon,
   ChevronRight,
@@ -85,7 +84,7 @@ tawp`
   const [loading, setLoading] = useState(false);
   const [showLimitModal, setShowLimitModal] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showLanguageDropdown, setShowLanguageDropdown] = useState(false);
   const [outputHeight, setOutputHeight] = useState(250);
   const [outputWidth, setOutputWidth] = useState(35); // Percentage of container width when on right
   const [isDragging, setIsDragging] = useState(false);
@@ -93,6 +92,7 @@ tawp`
   const [autoRun, setAutoRun] = useState(true); // Auto-run enabled by default
   const containerRef = useRef<HTMLDivElement>(null);
   const autoRunTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Read language from URL query parameter on mount
   useEffect(() => {
@@ -102,6 +102,22 @@ tawp`
       setCode(defaultSnippets[langFromUrl]);
     }
   }, []); // Run only once on mount
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowLanguageDropdown(false);
+      }
+    };
+
+    if (showLanguageDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }
+  }, [showLanguageDropdown]);
 
   const handleLanguageChange = (newLang: string) => {
     setLanguage(newLang);
@@ -219,22 +235,59 @@ tawp`
   };
 
   return (
-    <div className={`w-full ${isFullScreen ? 'fixed inset-0 z-50' : 'h-full'} ${bg && !isFullScreen && "bg-[#1E1E1E]"} flex flex-col overflow-hidden`}>
+    <div className={`w-full ${isFullScreen ? 'fixed inset-0 z-50' : 'h-full'} ${bg && !isFullScreen && "bg-black"} flex flex-col overflow-hidden`}>
       {/* IDE Container */}
-      <div className={`flex-1 flex flex-col ${isFullScreen ? '' : 'w-full'} bg-[#1E1E1E] overflow-hidden`}>
+      <div className={`flex-1 flex flex-col ${isFullScreen ? '' : 'w-full'} bg-black overflow-hidden`}>
 
         {/* Top Menu Bar */}
-        <div className="h-12 bg-[#2D2D30] border-b border-[#3E3E42] flex items-center px-4 gap-6">
+        <div className="h-12 bg-[#0A0A0A] border-b border-[#1A1A1A] flex items-center px-4 gap-6">
           <div className="flex items-center gap-2">
             <FileCode className="w-5 h-5 text-[#7001FE]" />
             <span className="text-white font-semibold text-sm">DesiCode IDE</span>
+          </div>
+
+          {/* Language Selector Dropdown */}
+          <div className="relative" ref={dropdownRef}>
+            <button
+              onClick={() => setShowLanguageDropdown(!showLanguageDropdown)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-[#1A1A1A] hover:bg-[#2A2A2A] rounded transition-colors text-white text-sm font-medium"
+            >
+              <FileCode className="w-4 h-4 text-[#7001FE]" />
+              <span>{languageMap[language]}</span>
+              <ChevronRight className={`w-4 h-4 transition-transform ${showLanguageDropdown ? 'rotate-90' : ''}`} />
+            </button>
+
+            {/* Dropdown Menu */}
+            {showLanguageDropdown && (
+              <div className="absolute top-full left-0 mt-1 w-48 bg-[#0F0F0F] border border-[#1A1A1A] rounded shadow-xl z-50 overflow-hidden">
+                {Object.keys(languageMap).map((lang) => (
+                  <button
+                    key={lang}
+                    onClick={() => {
+                      handleLanguageChange(lang);
+                      setShowLanguageDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors flex items-center gap-2 ${language === lang
+                      ? 'bg-[#1A1A1A] text-white'
+                      : 'text-[#CCCCCC] hover:bg-[#1A1A1A]'
+                      }`}
+                  >
+                    <FileCode className="w-4 h-4 text-[#7001FE]" />
+                    <span>{languageMap[lang]}</span>
+                    {language === lang && (
+                      <span className="ml-auto text-[#7001FE]">✓</span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex-1"></div>
 
           <button
             onClick={() => setIsFullScreen(!isFullScreen)}
-            className="p-2 hover:bg-[#3E3E42] rounded transition-colors text-[#CCCCCC]"
+            className="p-2 hover:bg-[#1A1A1A] rounded transition-colors text-[#CCCCCC]"
             title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
           >
             {isFullScreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
@@ -244,73 +297,14 @@ tawp`
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden" ref={containerRef}>
 
-          {/* Activity Bar */}
-          <div className="w-12 bg-[#333333] border-r border-[#3E3E42] flex flex-col items-center py-4 gap-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className={`p-2 hover:bg-[#3E3E42] rounded transition-colors ${sidebarOpen ? 'text-white' : 'text-[#858585]'}`}
-              title="Explorer"
-            >
-              <FolderOpen className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Sidebar */}
-          {sidebarOpen && (
-            <div className="w-64 bg-[#252526] border-r border-[#3E3E42] flex flex-col">
-              <div className="p-3 border-b border-[#3E3E42]">
-                <h2 className="text-[#CCCCCC] text-xs font-semibold uppercase tracking-wider">Explorer</h2>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-2">
-                <div className="mb-2">
-                  <div className="flex items-center gap-1 text-white text-sm font-medium mb-2 px-2 py-1">
-                    <ChevronRight className="w-4 h-4" />
-                    <span>My Project</span>
-                  </div>
-                  <div className="ml-4">
-                    {Object.keys(languageMap).map((lang) => (
-                      <button
-                        key={lang}
-                        onClick={() => handleLanguageChange(lang)}
-                        className={`w-full text-left px-3 py-1.5 text-sm rounded transition-colors flex items-center gap-2 ${language === lang
-                          ? 'bg-[#37373D] text-white'
-                          : 'text-[#CCCCCC] hover:bg-[#2A2D2E]'
-                          }`}
-                      >
-                        <FileCode className="w-4 h-4 text-[#7001FE]" />
-                        {lang}.dsc
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-3 border-t border-[#3E3E42]">
-                <div className="text-xs text-[#858585]">
-                  <div className="mb-1">Language: <span className="text-[#7001FE] font-medium">{languageMap[language]}</span></div>
-                  <div>Lines: {code.split('\n').length}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Editor Area - Flex direction changes based on terminal position */}
-          <div className={`flex-1 flex ${terminalPosition === 'bottom' ? 'flex-col' : 'flex-row'} bg-[#1E1E1E]`}>
+          <div className={`flex-1 flex ${terminalPosition === 'bottom' ? 'flex-col' : 'flex-row'} bg-black`}>
 
             {/* Editor Section */}
             <div className="flex-1 flex flex-col min-w-0 min-h-0">
 
-              {/* Tab Bar */}
-              <div className="h-9 bg-[#2D2D30] border-b border-[#3E3E42] flex items-center px-2 gap-1">
-                <div className="flex items-center gap-2 px-3 py-1 bg-[#1E1E1E] border-t-2 border-[#7001FE] text-white text-sm">
-                  <FileCode className="w-4 h-4 text-[#7001FE]" />
-                  <span>{language}.dsc</span>
-                </div>
-              </div>
-
               {/* Toolbar */}
-              <div className="h-10 bg-[#2D2D30] border-b border-[#3E3E42] flex items-center px-4 gap-3">
+              <div className="h-10 bg-[#0A0A0A] border-b border-[#1A1A1A] flex items-center px-4 gap-3">
                 <button
                   onClick={handleRunCode}
                   disabled={loading}
@@ -332,14 +326,14 @@ tawp`
                   )}
                 </button>
 
-                <div className="h-5 w-px bg-[#3E3E42]"></div>
+                <div className="h-5 w-px bg-[#1A1A1A]"></div>
 
                 {/* Auto-Run Toggle */}
                 <button
                   onClick={() => setAutoRun(!autoRun)}
                   className={`px-3 py-1.5 rounded flex items-center gap-2 transition-colors ${autoRun
                     ? 'bg-[#7001FE] hover:bg-[#6001E0] text-white'
-                    : 'bg-[#3E3E42] hover:bg-[#4E4E52] text-[#CCCCCC]'
+                    : 'bg-[#1A1A1A] hover:bg-[#2A2A2A] text-[#CCCCCC]'
                     } text-xs font-medium`}
                   title={autoRun ? 'Auto-run is ON' : 'Auto-run is OFF'}
                 >
@@ -391,7 +385,7 @@ tawp`
               className={`${terminalPosition === 'bottom'
                 ? 'h-1.5 w-full cursor-ns-resize'
                 : 'w-1.5 h-full cursor-ew-resize'
-                } bg-[#3E3E42] hover:bg-[#7001FE] transition-colors flex items-center justify-center group select-none`}
+                } bg-[#1A1A1A] hover:bg-[#7001FE] transition-colors flex items-center justify-center group select-none`}
             >
               <div className={`${terminalPosition === 'bottom'
                 ? 'w-16 h-1'
@@ -401,14 +395,14 @@ tawp`
 
             {/* Output Panel - Size depends on position */}
             <div
-              className="bg-[#1E1E1E] border-[#3E3E42] flex flex-col min-h-0 min-w-0 flex-shrink-0"
+              className="bg-black border-[#1A1A1A] flex flex-col min-h-0 min-w-0 flex-shrink-0"
               style={{
                 [terminalPosition === 'bottom' ? 'height' : 'width']: terminalPosition === 'bottom' ? `${outputHeight}px` : `${outputWidth}%`,
                 borderTopWidth: terminalPosition === 'bottom' ? '1px' : '0',
                 borderLeftWidth: terminalPosition === 'right' ? '1px' : '0'
               }}
             >
-              <div className={`h-9 bg-[#2D2D30] border-b border-[#3E3E42] flex items-center ${terminalPosition === 'right' ? 'px-2 gap-1' : 'px-4 gap-4'} flex-shrink-0`}>
+              <div className={`h-9 bg-[#0A0A0A] border-b border-[#1A1A1A] flex items-center ${terminalPosition === 'right' ? 'px-2 gap-1' : 'px-4 gap-4'} flex-shrink-0`}>
                 <div className={`flex items-center gap-2 text-white ${terminalPosition === 'right' ? 'text-xs' : 'text-sm'} font-medium`}>
                   <TerminalIcon className="w-4 h-4 flex-shrink-0" />
                   <span className="truncate">Output</span>
@@ -418,7 +412,7 @@ tawp`
                 {/* Toggle Terminal Position Button */}
                 <button
                   onClick={() => setTerminalPosition(terminalPosition === 'bottom' ? 'right' : 'bottom')}
-                  className="p-1 hover:bg-[#3E3E42] rounded transition-colors text-[#CCCCCC] flex-shrink-0"
+                  className="p-1 hover:bg-[#1A1A1A] rounded transition-colors text-[#CCCCCC] flex-shrink-0"
                   title={terminalPosition === 'bottom' ? 'Move to Right' : 'Move to Bottom'}
                 >
                   {terminalPosition === 'bottom' ? <ArrowRight className="w-4 h-4" /> : <ArrowDown className="w-4 h-4" />}
@@ -427,7 +421,7 @@ tawp`
                 {output && (
                   <button
                     onClick={() => setOutput("")}
-                    className="p-1 hover:bg-[#3E3E42] rounded transition-colors text-[#CCCCCC] flex-shrink-0"
+                    className="p-1 hover:bg-[#1A1A1A] rounded transition-colors text-[#CCCCCC] flex-shrink-0"
                     title="Clear Output"
                   >
                     <X className="w-4 h-4" />
@@ -465,8 +459,8 @@ tawp`
 
       {/* Limit Modal */}
       {showLimitModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm">
-          <div className="bg-[#2D2D30] p-8 rounded-lg max-w-md text-center border border-[#3E3E42] shadow-2xl">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm">
+          <div className="bg-[#0A0A0A] p-8 rounded-lg max-w-md text-center border border-[#1A1A1A] shadow-2xl">
             <h3 className="text-xl text-white font-bold mb-4">Run Limit Reached</h3>
             <p className="text-[#CCCCCC] mb-6">
               You have used your 2 free code runs. Upgrade to Pro or Enterprise to continue coding without limits.
@@ -474,7 +468,7 @@ tawp`
             <div className="flex justify-center gap-4">
               <button
                 onClick={() => setShowLimitModal(false)}
-                className="px-6 py-2 text-[#CCCCCC] hover:text-white hover:bg-[#3E3E42] rounded transition-colors"
+                className="px-6 py-2 text-[#CCCCCC] hover:text-white hover:bg-[#1A1A1A] rounded transition-colors"
               >
                 Cancel
               </button>

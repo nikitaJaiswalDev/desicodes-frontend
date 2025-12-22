@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Info, FileText, X, Loader2 } from 'lucide-react'; // Added Loader2
+import { useState, useEffect } from 'react';
+import { X, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import { type Plan, createRazorpayOrder, verifyRazorpayPayment } from '../lib/api';
 
 interface PaymentModalProps {
@@ -8,264 +8,240 @@ interface PaymentModalProps {
     plan: Plan | null;
 }
 
+// Extend Window interface to include Razorpay
+declare global {
+    interface Window {
+        Razorpay: any;
+    }
+}
+
 export function PaymentModal({ isOpen, onClose, plan }: PaymentModalProps) {
-    const [fullName, setFullName] = useState('');
-    const [cardNumber, setCardNumber] = useState('');
-    const [ccv, setCcv] = useState('');
-    const [expiration, setExpiration] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+    const [scriptLoaded, setScriptLoaded] = useState(false);
+
+    // Load Razorpay checkout script
+    useEffect(() => {
+        if (isOpen && !scriptLoaded) {
+            const script = document.createElement('script');
+            script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+            script.async = true;
+            script.onload = () => setScriptLoaded(true);
+            script.onerror = () => {
+                setError('Failed to load Razorpay. Please refresh and try again.');
+            };
+            document.body.appendChild(script);
+
+            return () => {
+                document.body.removeChild(script);
+            };
+        }
+    }, [isOpen, scriptLoaded]);
 
     if (!isOpen || !plan) return null;
 
-    const quantity = 1;
-    // Use plan price converted to proper currency unit, defaulting to dollars if not INR
-    // Backend sends price in cents/paise
-    const displayPrice = plan.price / 100;
+    const displayPrice = plan.price / 100; // Convert paise to main currency unit
+    const currency = plan.currency || 'INR';
 
-    const formatCardNumber = (value: string) => {
-        const numbers = value.replace(/\D/g, '');
-        const groups = numbers.match(/.{1,4}/g);
-        return groups ? groups.join(' ') : numbers;
-    };
-
-    const formatExpiration = (value: string) => {
-        const numbers = value.replace(/\D/g, '');
-        if (numbers.length >= 2) {
-            return `${numbers.slice(0, 2)} / ${numbers.slice(2, 4)}`;
-        }
-        return numbers;
-    };
-
-    const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const formatted = formatCardNumber(e.target.value);
-        if (formatted.replace(/\s/g, '').length <= 16) {
-            setCardNumber(formatted);
-        }
-    };
-
-    const handleExpirationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const formatted = formatExpiration(e.target.value);
-        if (formatted.replace(/\D/g, '').length <= 4) {
-            setExpiration(formatted);
-        }
-    };
-
-    const handleCcvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value.replace(/\D/g, '');
-        if (value.length <= 3) {
-            setCcv(value);
-        }
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handlePayment = async () => {
         setError(null);
-
-        // Basic Validation
-        if (!fullName || cardNumber.replace(/\s/g, '').length < 16 || ccv.length < 3 || expiration.length < 5) {
-            setError("Please fill in all payment details correctly.");
-            return;
-        }
-
         setLoading(true);
 
         try {
-            // 1. Create Order (Mock or Real)
-            const order = await createRazorpayOrder(plan.id, plan.currency || 'USD');
+            // 1. Create Razorpay order
+            const order = await createRazorpayOrder(plan.id, currency);
 
-            // 2. Mock Payment Flow (Since user asked for dummy keys support)
-            // Even if real keys are present, this form implies a direct payment handling
-            // which standard razorpay JS checkout would handle differently (opening a modal).
-            // For this specific 'Custom Form' UI + 'Dummy Keys' request, we assume 
-            // we process it as a mock successful payment if the backend allows it.
+            if (!window.Razorpay) {
+                throw new Error('Razorpay SDK not loaded. Please refresh the page.');
+            }
 
-            // If backend returned a mock order (starts with order_mock_) OR we are forcing simulation:
-            const paymentId = `pay_mock_${Date.now()}`;
-            const signature = `sig_mock_${Date.now()}`;
+            // 2. Get user details
+            const userStr = localStorage.getItem('dc_user');
+            const user = userStr ? JSON.parse(userStr) : null;
 
-            // 3. Verify Payment (simulating success from Razorpay)
-            await verifyRazorpayPayment({
-                razorpay_order_id: order.order_id,
-                razorpay_payment_id: paymentId,
-                razorpay_signature: signature
-            });
+            // 3. Configure Razorpay checkout options
+            const options = {
+                key: order.key_id,
+                amount: order.amount,
+                currency: order.currency,
+                name: 'DesiCodes',
+                description: `${plan.name} Plan Subscription`,
+                order_id: order.order_id,
+                prefill: {
+                    name: user?.username || '',
+                    email: user?.email || '',
+                },
+                theme: {
+                    color: '#7001FE',
+                },
+                handler: async function (response: any) {
+                    // Payment successful, verify it
+                    try {
+                        await verifyRazorpayPayment({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                        });
 
-            // Success
-            alert("Payment successful! Subscription upgraded.");
-            onClose();
-            // Ideally trigger a refresh of user subscription state here
-            window.location.reload(); // Simple reload to reflect changes
+                        // Payment verified successfully
+                        setSuccess(true);
+                        setLoading(false);
+
+                        // Reload page after 2 seconds to reflect new subscription
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    } catch (err: any) {
+                        console.error('Payment verification failed:', err);
+                        setError(err.message || 'Payment verification failed. Please contact support.');
+                        setLoading(false);
+                    }
+                },
+                modal: {
+                    ondismiss: function () {
+                        setLoading(false);
+                        setError('Payment cancelled. Please try again if you want to upgrade.');
+                    },
+                },
+            };
+
+            // 4. Open Razorpay checkout
+            const razorpay = new window.Razorpay(options);
+            razorpay.open();
 
         } catch (err: any) {
-            console.error(err);
-            setError(err.message || "Payment failed. Please try again.");
-        } finally {
+            console.error('Payment initiation failed:', err);
+            setError(err.message || 'Failed to initiate payment. Please try again.');
             setLoading(false);
+        }
+    };
+
+    const handleClose = () => {
+        if (!loading) {
+            setError(null);
+            setSuccess(false);
+            onClose();
         }
     };
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-            <div className="relative w-full max-w-5xl bg-[#1F2937] rounded-2xl p-6 sm:p-8 lg:p-12 shadow-2xl max-h-[90vh] overflow-y-auto">
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
-                >
-                    <X size={24} />
-                </button>
+            <div className="relative w-full max-w-md bg-[#0F0F0F] rounded-2xl p-8 shadow-2xl border border-gray-800">
+                {!loading && !success && (
+                    <button
+                        onClick={handleClose}
+                        className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+                    >
+                        <X size={24} />
+                    </button>
+                )}
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
-                    {/* Left Column - Payment Form */}
-                    <div>
-                        <h1 className="text-[#FF3366] text-2xl sm:text-3xl mb-2 italic">
-                            <span className="text-[35px] justify-start font-bold italic leading-[1.3] bg-[linear-gradient(80.32deg,#F83A3A_10%,#F13DD4_50%,#7000FF_90%)] bg-clip-text text-transparent">
+                {/* Success State */}
+                {success && (
+                    <div className="text-center py-8">
+                        <div className="mb-4 flex justify-center">
+                            <CheckCircle size={64} className="text-green-500" />
+                        </div>
+                        <h2 className="text-white text-2xl mb-2">Payment Successful!</h2>
+                        <p className="text-gray-400 mb-4">
+                            Your subscription to {plan.name} plan has been activated.
+                        </p>
+                        <p className="text-gray-500 text-sm">
+                            Redirecting...
+                        </p>
+                    </div>
+                )}
+
+                {/* Loading State */}
+                {loading && !success && (
+                    <div className="text-center py-8">
+                        <div className="mb-4 flex justify-center">
+                            <Loader2 size={48} className="text-[#7001FE] animate-spin" />
+                        </div>
+                        <h2 className="text-white text-xl mb-2">Processing Payment...</h2>
+                        <p className="text-gray-400 text-sm">
+                            Please complete the payment in the Razorpay window
+                        </p>
+                    </div>
+                )}
+
+                {/* Payment Confirmation */}
+                {!loading && !success && (
+                    <>
+                        <div className="text-center mb-8">
+                            <h1 className="text-[35px] font-bold italic leading-[1.3] bg-[linear-gradient(80.32deg,#F83A3A_10%,#F13DD4_50%,#7000FF_90%)] bg-clip-text text-transparent mb-4">
                                 desicodes
-                            </span>
-                        </h1>
-
-                        <div className="mb-8">
-                            <h2 className="text-white text-xl mb-2">Payment</h2>
+                            </h1>
+                            <h2 className="text-white text-2xl mb-2">Upgrade to {plan.name}</h2>
                             <p className="text-gray-400 text-sm">
-                                Complete your upgrade to {plan.name}
+                                Complete your subscription payment
                             </p>
                         </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            {/* Full Name */}
-                            <div>
-                                <label className="flex items-center gap-2 text-white text-sm mb-2">
-                                    Full Name
-                                    <Info size={14} className="text-gray-400" />
-                                </label>
-                                <input
-                                    type="text"
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    className="w-full bg-white rounded-lg px-4 py-3 text-[#0F0F0F] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7001FE]"
-                                    placeholder="John Doe"
-                                />
+                        {/* Plan Details */}
+                        <div className="bg-[#1A1A1A] rounded-xl p-6 mb-6 border border-gray-800">
+                            <div className="flex justify-between items-center mb-4">
+                                <span className="text-gray-400">Plan</span>
+                                <span className="text-white font-medium">{plan.name}</span>
                             </div>
-
-                            {/* Card Number */}
-                            <div>
-                                <label className="flex items-center gap-2 text-white text-sm mb-2">
-                                    Card Number
-                                    <Info size={14} className="text-gray-400" />
-                                </label>
-                                <input
-                                    type="text"
-                                    value={cardNumber}
-                                    onChange={handleCardNumberChange}
-                                    className="w-full bg-white rounded-lg px-4 py-3 text-[#0F0F0F] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7001FE]"
-                                    placeholder="1234 - - - -    - - - -    - - - -"
-                                />
+                            <div className="flex justify-between items-center mb-4">
+                                <span className="text-gray-400">Billing Period</span>
+                                <span className="text-white">Monthly</span>
                             </div>
-
-                            {/* CCV and Expiration Date */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label className="flex items-center gap-2 text-white text-sm mb-2">
-                                        CCV
-                                        <Info size={14} className="text-gray-400" />
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={ccv}
-                                        onChange={handleCcvChange}
-                                        className="w-full bg-white rounded-lg px-4 py-3 text-[#0F0F0F] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7001FE]"
-                                        placeholder="- - -"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="flex items-center gap-2 text-white text-sm mb-2">
-                                        Expiration Date
-                                        <Info size={14} className="text-gray-400" />
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={expiration}
-                                        onChange={handleExpirationChange}
-                                        className="w-full bg-white rounded-lg px-4 py-3 text-[#0F0F0F] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#7001FE]"
-                                        placeholder="MM / YY"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Error Message */}
-                            {error && (
-                                <div className="text-red-500 text-sm bg-red-500/10 p-3 rounded-lg border border-red-500/20">
-                                    {error}
-                                </div>
-                            )}
-
-                            {/* Submit Button */}
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full bg-[#7001FE] text-white py-3.5 rounded-lg hover:bg-[#5a01cc] transition-colors mt-8 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                            >
-                                {loading ? (
-                                    <>
-                                        <Loader2 className="w-5 h-5 animate-spin" />
-                                        Processing...
-                                    </>
-                                ) : (
-                                    "Complete Payment"
-                                )}
-                            </button>
-                        </form>
-                    </div>
-
-                    {/* Right Column - Payment Summary */}
-                    <div className="flex items-start justify-center lg:justify-end">
-                        <div className="w-full max-w-sm">
-                            {/* Tab */}
-                            <div className="flex justify-end mb-[-20px] relative z-10">
-                                <div className="bg-gradient-to-r from-orange-400 to-orange-500 text-white px-6 py-2 rounded-t-lg text-sm">
-                                    Summary
-                                </div>
-                            </div>
-
-                            {/* Card */}
-                            <div className="bg-[#B8C5D6] rounded-2xl p-6 relative">
-                                <div className="mb-6">
-                                    <h3 className="text-[#1F2937] mb-4">Payment Summary</h3>
-
-                                    <div className="space-y-3 text-sm bg-[#DFECF6] rounded-2xl p-6">
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Plan</span>
-                                            <span className="text-[#1F2937] font-medium">{plan.name}</span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                            <span className="text-gray-600">Quantity</span>
-                                            <span className="text-[#1F2937]">{quantity}</span>
-                                        </div>
-                                        <div className="flex justify-between pt-3 border-t border-gray-400">
-                                            <span className="text-gray-600">Total Amount</span>
-                                            <span className="text-[#1F2937] font-bold">${displayPrice.toFixed(2)}</span>
-                                        </div>
+                            <div className="h-px bg-gray-800 my-4"></div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-white font-semibold">Total Amount</span>
+                                <div className="text-right">
+                                    <div className="text-[#7001FE] text-2xl font-bold">
+                                        {currency === 'INR' ? '₹' : '$'}{displayPrice.toFixed(2)}
                                     </div>
+                                    <div className="text-gray-500 text-xs">per month</div>
                                 </div>
-
-                                {/* Amount to be Paid */}
-                                <div className="bg-[#8FA3BB] rounded-xl p-4 flex items-center justify-between">
-                                    <div>
-                                        <p className="text-gray-600 text-xs mb-1">Amount to be Paid</p>
-                                        <p className="text-[#1F2937] text-2xl font-bold">${displayPrice.toFixed(2)}</p>
-                                    </div>
-                                    <div className="bg-[#B8C5D6] rounded-lg p-3">
-                                        <FileText size={24} className="text-[#1F2937]" />
-                                    </div>
-                                </div>
-
-                                {/* Decorative Circles */}
-                                <div className="absolute left-0 top-1/2 w-6 h-6 bg-[#1F2937] rounded-full -translate-x-1/2 -translate-y-1/2" />
-                                <div className="absolute right-0 top-1/2 w-6 h-6 bg-[#1F2937] rounded-full translate-x-1/2 -translate-y-1/2" />
                             </div>
                         </div>
-                    </div>
-                </div>
+
+                        {/* Error Message */}
+                        {error && (
+                            <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg flex items-start gap-3">
+                                <AlertCircle size={20} className="text-red-500 flex-shrink-0 mt-0.5" />
+                                <div className="text-red-400 text-sm">{error}</div>
+                            </div>
+                        )}
+
+                        {/* Payment Info */}
+                        <div className="mb-6 p-4 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                            <p className="text-blue-400 text-sm">
+                                <strong>Secure Payment:</strong> All transactions are encrypted and secure.
+                                We support Cards, UPI, Net Banking, and Wallets.
+                            </p>
+                        </div>
+
+                        {/* Pay Button */}
+                        <button
+                            onClick={handlePayment}
+                            disabled={loading || !scriptLoaded}
+                            className="w-full bg-[#7001FE] text-white py-4 rounded-lg hover:bg-[#5a01cc] transition-colors font-semibold text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                        >
+                            {!scriptLoaded ? (
+                                <>
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                    Loading...
+                                </>
+                            ) : (
+                                <>
+                                    Pay {currency === 'INR' ? '₹' : '$'}{displayPrice.toFixed(2)}
+                                </>
+                            )}
+                        </button>
+
+                        {/* Terms */}
+                        <p className="text-gray-500 text-xs text-center mt-4">
+                            By proceeding, you agree to our Terms of Service and Privacy Policy.
+                            Your subscription will auto-renew monthly.
+                        </p>
+                    </>
+                )}
             </div>
         </div>
     );

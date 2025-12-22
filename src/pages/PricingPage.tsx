@@ -46,9 +46,8 @@ export function PricingPage() {
 
   const getPlanDescription = (name: string) => {
     switch (name.toLowerCase()) {
-      case 'starter': return 'For individuals just getting started.';
-      case 'pro': return 'For growing teams and businesses.';
-      case 'enterprise': return 'For large organizations with specific needs.';
+      case 'free': return 'Try DesiCode IDE - Experience coding in native languages';
+      case 'pro': return 'For students, bloggers, and solo developers';
       default: return 'Best plan for you.';
     }
   };
@@ -122,7 +121,9 @@ export function PricingPage() {
                 <div className="mb-6">
                   <h3 className="text-white text-xl mb-4">{plan.name}</h3>
                   <div className="flex items-baseline gap-1 mb-2">
-                    <span className="text-white text-4xl">${priceDisplay}</span>
+                    <span className="text-white text-4xl">
+                      {plan.currency === 'INR' ? '₹' : '$'}{priceDisplay}
+                    </span>
                     <span className="text-gray-400 text-sm">{period}</span>
                   </div>
                   <p className="text-gray-400 text-sm">{getPlanDescription(plan.name)}</p>
