@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { Search, Bell, LogOut } from 'lucide-react';
+import { Search, LogOut } from 'lucide-react';
 import { useState, useEffect } from "react";
 
 export function AuthHeader() {

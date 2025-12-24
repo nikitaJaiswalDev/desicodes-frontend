@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Check, CreditCard, ArrowRight } from 'lucide-react';
+import { Check, CreditCard, } from 'lucide-react';
 import { AuthHeader } from '../components/layout/AuthHeader';
 import { Sidebar } from '../components/sections/dashboard/Sidebar';
 import { getAvailablePlans, getUserSubscriptions, cancelSubscription, resumeSubscription, type Plan, type Subscription } from '../lib/api';
@@ -7,7 +7,7 @@ import { getAvailablePlans, getUserSubscriptions, cancelSubscription, resumeSubs
 import { PaymentModal } from '../components/PaymentModal';
 
 export function SubscriptionPage() {
-  const [autoRenewal, setAutoRenewal] = useState(true);
+  // const [autoRenewal, setAutoRenewal] = useState(true);
   // const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   const [plans, setPlans] = useState<Plan[]>([]);

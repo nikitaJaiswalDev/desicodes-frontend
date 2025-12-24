@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Zap, CreditCard, Activity, Download, Shield, X, Loader2, Info } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { jsPDF } from 'jspdf';
 import { AuthHeader } from '../components/layout/AuthHeader';
 import { Sidebar } from '../components/sections/dashboard/Sidebar';
 import { getInvoices, getUserSubscriptions, getAvailablePlans, downloadInvoice, type Invoice, type Subscription, type Plan, getPaymentHistory, type PaymentHistory } from '../lib/api';
