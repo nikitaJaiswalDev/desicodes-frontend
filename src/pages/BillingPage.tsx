@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import { AuthHeader } from '../components/layout/AuthHeader';
 import { Sidebar } from '../components/sections/dashboard/Sidebar';
-import { getInvoices, getUserSubscriptions, getAvailablePlans, type Invoice, type Subscription, type Plan, getPaymentHistory, type PaymentHistory } from '../lib/api';
+import { getInvoices, getUserSubscriptions, getAvailablePlans, downloadInvoice, type Invoice, type Subscription, type Plan, getPaymentHistory, type PaymentHistory } from '../lib/api';
 
 export function BillingPage() {
   const navigate = useNavigate();
@@ -98,18 +98,25 @@ export function BillingPage() {
     });
   };
 
-  const handleDownloadInvoice = (invoice: Invoice) => {
-    const doc = new jsPDF();
-    doc.setFontSize(20);
-    doc.text("Invoice", 20, 20);
+  const handleDownloadInvoice = async (invoice: Invoice) => {
+    try {
+      // Check if invoice has Razorpay URL directly
+      if (invoice.invoice_url) {
+        window.open(invoice.invoice_url, '_blank');
+        return;
+      }
 
-    doc.setFontSize(12);
-    doc.text(`Invoice ID: #${invoice.id}`, 20, 40);
-    doc.text(`Date: ${formatDate(invoice.created_at)}`, 20, 50);
-    doc.text(`Amount: ${invoice.currency === 'INR' ? 'Rs.' : '$'} ${Number(invoice.amount || 0).toFixed(2)}`, 20, 60);
-    doc.text(`Status: ${invoice.status}`, 20, 70);
-
-    doc.save(`invoice_${invoice.id}.pdf`);
+      // Otherwise, fetch the URL from backend
+      const response = await downloadInvoice(invoice.id);
+      if (response.invoice_url) {
+        window.open(response.invoice_url, '_blank');
+      } else {
+        alert('Invoice URL not available. Please contact support.');
+      }
+    } catch (error: any) {
+      console.error('Failed to download invoice:', error);
+      alert(error.message || 'Failed to download invoice. Please try again.');
+    }
   };
 
   const handleUpdatePaymentMethod = (e: React.FormEvent) => {

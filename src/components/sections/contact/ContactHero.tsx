@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Button from "../../UI/Button";
 
 const ContactHero: React.FC = () => {
   const navigate = useNavigate();
@@ -41,12 +42,7 @@ const ContactHero: React.FC = () => {
           </div>
 
           {/* CTA Button */}
-          <button
-            onClick={handleGetStarted}
-            className="bg-white/90 border border-[#0000000D] shadow-sm text-black px-6 py-3 rounded-md text-sm font-medium tracking-wide hover:bg-white transition-colors cursor-pointer"
-          >
-            Get started today
-          </button>
+          <Button onClick={handleGetStarted}>Get Started</Button>
         </div>
       </div>
     </div>

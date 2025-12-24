@@ -88,11 +88,64 @@ tawp`
   const [outputHeight, setOutputHeight] = useState(250);
   const [outputWidth, setOutputWidth] = useState(35); // Percentage of container width when on right
   const [isDragging, setIsDragging] = useState(false);
-  const [terminalPosition, setTerminalPosition] = useState<'bottom' | 'right'>('bottom');
+  const [terminalPosition, setTerminalPosition] = useState<'bottom' | 'right'>('right');
   const [autoRun, setAutoRun] = useState(true); // Auto-run enabled by default
   const containerRef = useRef<HTMLDivElement>(null);
   const autoRunTimerRef = useRef<NodeJS.Timeout | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Free tier tracking for unauthenticated users
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [freeRunsRemaining, setFreeRunsRemaining] = useState(20);
+
+  // Check authentication status and load free tier runs
+  useEffect(() => {
+    const token = localStorage.getItem('dc_token');
+    setIsAuthenticated(!!token);
+
+    if (!token) {
+      // Load or initialize free tier usage tracking
+      const freeUsageData = localStorage.getItem('dc_free_usage');
+      if (freeUsageData) {
+        try {
+          const usage = JSON.parse(freeUsageData);
+          const currentMonth = new Date().getMonth();
+          const currentYear = new Date().getFullYear();
+
+          // Reset if it's a new month
+          if (usage.month !== currentMonth || usage.year !== currentYear) {
+            const newUsage = {
+              runs: 20,
+              month: currentMonth,
+              year: currentYear
+            };
+            localStorage.setItem('dc_free_usage', JSON.stringify(newUsage));
+            setFreeRunsRemaining(20);
+          } else {
+            setFreeRunsRemaining(usage.runs);
+          }
+        } catch {
+          // Invalid data, reset
+          const newUsage = {
+            runs: 20,
+            month: new Date().getMonth(),
+            year: new Date().getFullYear()
+          };
+          localStorage.setItem('dc_free_usage', JSON.stringify(newUsage));
+          setFreeRunsRemaining(20);
+        }
+      } else {
+        // First time user
+        const newUsage = {
+          runs: 20,
+          month: new Date().getMonth(),
+          year: new Date().getFullYear()
+        };
+        localStorage.setItem('dc_free_usage', JSON.stringify(newUsage));
+        setFreeRunsRemaining(20);
+      }
+    }
+  }, []);
 
   // Read language from URL query parameter on mount
   useEffect(() => {
@@ -126,11 +179,30 @@ tawp`
   };
 
   const handleRunCode = async () => {
+    // Check free tier limit for unauthenticated users
+    if (!isAuthenticated && freeRunsRemaining <= 0) {
+      setShowLimitModal(true);
+      return;
+    }
+
     setLoading(true);
     setOutput("Running...");
     try {
       const result = await executeCode(language, code);
       setOutput(result.output);
+
+      // Decrement free tier runs for unauthenticated users
+      if (!isAuthenticated) {
+        const newRunsRemaining = freeRunsRemaining - 1;
+        setFreeRunsRemaining(newRunsRemaining);
+
+        const freeUsageData = localStorage.getItem('dc_free_usage');
+        if (freeUsageData) {
+          const usage = JSON.parse(freeUsageData);
+          usage.runs = newRunsRemaining;
+          localStorage.setItem('dc_free_usage', JSON.stringify(usage));
+        }
+      }
     } catch (e: any) {
       let msg = e.message || "";
       try {
@@ -235,7 +307,7 @@ tawp`
   };
 
   return (
-    <div className={`w-full ${isFullScreen ? 'fixed inset-0 z-50' : 'h-full'} ${bg && !isFullScreen && "bg-black"} flex flex-col overflow-hidden`}>
+    <div className={`w-full ${isFullScreen ? 'fixed inset-0 z-50' : 'h-screen'} ${bg && !isFullScreen && "bg-black"} flex flex-col overflow-hidden`}>
       {/* IDE Container */}
       <div className={`flex-1 flex flex-col ${isFullScreen ? '' : 'w-full'} bg-black overflow-hidden`}>
 
@@ -453,6 +525,14 @@ tawp`
           <div>Lines: {code.split('\n').length}</div>
           <div>Language: {language}</div>
           <div className="flex-1"></div>
+          {!isAuthenticated && (
+            <div className="flex items-center gap-2 bg-white/10 px-2 py-0.5 rounded">
+              <span className="font-medium">Free Tier:</span>
+              <span className={freeRunsRemaining <= 5 ? 'text-yellow-300 font-bold' : ''}>
+                {freeRunsRemaining}/20 runs
+              </span>
+            </div>
+          )}
           <div>DesiCode v1.0.0</div>
         </div>
       </div>
@@ -463,7 +543,15 @@ tawp`
           <div className="bg-[#0A0A0A] p-8 rounded-lg max-w-md text-center border border-[#1A1A1A] shadow-2xl">
             <h3 className="text-xl text-white font-bold mb-4">Run Limit Reached</h3>
             <p className="text-[#CCCCCC] mb-6">
-              You have used your 2 free code runs. Upgrade to Pro or Enterprise to continue coding without limits.
+              {!isAuthenticated ? (
+                <>
+                  You have used all <strong>20 free runs</strong> for this month.
+                  <br /><br />
+                  Sign up for a free account to get more runs, or upgrade to Pro for unlimited access!
+                </>
+              ) : (
+                'You have reached your monthly run limit. Upgrade to Pro to continue coding without limits.'
+              )}
             </p>
             <div className="flex justify-center gap-4">
               <button
@@ -472,12 +560,21 @@ tawp`
               >
                 Cancel
               </button>
-              <button
-                onClick={() => navigate('/pricing')}
-                className="bg-[#7001FE] text-white px-6 py-2 rounded hover:bg-[#5a01cc] transition-colors shadow-lg shadow-purple-500/20"
-              >
-                View Plans
-              </button>
+              {!isAuthenticated ? (
+                <button
+                  onClick={() => navigate('/signup')}
+                  className="bg-[#7001FE] text-white px-6 py-2 rounded hover:bg-[#5a01cc] transition-colors shadow-lg shadow-purple-500/20"
+                >
+                  Sign Up Free
+                </button>
+              ) : (
+                <button
+                  onClick={() => navigate('/pricing')}
+                  className="bg-[#7001FE] text-white px-6 py-2 rounded hover:bg-[#5a01cc] transition-colors shadow-lg shadow-purple-500/20"
+                >
+                  View Plans
+                </button>
+              )}
             </div>
           </div>
         </div>

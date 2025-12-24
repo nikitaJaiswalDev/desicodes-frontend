@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Button from "../../UI/Button";
 
 const LearnResourcesHero: React.FC = () => {
   const navigate = useNavigate();
@@ -40,16 +41,7 @@ const LearnResourcesHero: React.FC = () => {
           for first-time learners, teachers, and developers.
         </p>
 
-        <button
-          onClick={handleNavigate}
-          className="w-full sm:w-auto px-16 py-2
-             bg-[rgba(255,255,255,0.9)]
-             border-[3px] border-[rgba(255,255,255,0.3)]
-             text-[#0D0D0D] font-medium rounded-md
-             transition-all duration-300 transform shadow-lg hover:shadow-xl cursor-pointer"
-        >
-          Start Learning
-        </button>
+        <Button onClick={handleNavigate}>Start Learning</Button>
 
         <div className="flex flex-col justify-center items-center z-50 w-fit mx-auto gap-4 text-gray-400 hover:text-gray-300 transition-colors cursor-pointer">
           <span className="text-sm font-medium opacity-40">Learn more</span>
@@ -67,17 +59,6 @@ const LearnResourcesHero: React.FC = () => {
             />
           </svg>
         </div>
-      </div>
-      {/* Bottom section with "You're in good company" */}
-      <div className="text-center mt-14 z-50 font-Lufga">
-        <h2 className="text-2xl md:text-3xl lg:text-6xl font-bold mb-8 text-white bg-clip-text">
-          You're in the Right <br />
-          Place to Begin
-        </h2>
-        <p className="text-white opacity-40 text-lg md:text-xl max-w-xl mx-auto">
-          Join a Growing Movement of Native-Language Coders <br />
-          Your journey inspires the next generation.
-        </p>
       </div>
     </section>
   );

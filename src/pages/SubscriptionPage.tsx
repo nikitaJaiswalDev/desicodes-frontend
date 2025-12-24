@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Check, CreditCard, ArrowRight } from 'lucide-react';
 import { AuthHeader } from '../components/layout/AuthHeader';
 import { Sidebar } from '../components/sections/dashboard/Sidebar';
-import { getAvailablePlans, getUserSubscriptions, type Plan, type Subscription } from '../lib/api';
+import { getAvailablePlans, getUserSubscriptions, cancelSubscription, resumeSubscription, type Plan, type Subscription } from '../lib/api';
 
 import { PaymentModal } from '../components/PaymentModal';
 
@@ -16,6 +16,8 @@ export function SubscriptionPage() {
   const [loading, setLoading] = useState(true);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [isCancelled, setIsCancelled] = useState(false);
+  const [cancelPeriodEnd, setCancelPeriodEnd] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -56,10 +58,51 @@ export function SubscriptionPage() {
 
   const getPlanDescription = (name: string) => {
     switch (name.toLowerCase()) {
-      case 'starter': return 'For individuals just getting started.';
-      case 'pro': return 'For growing teams and businesses.';
-      case 'enterprise': return 'For large organizations with specific needs.';
+      case 'free': return 'For individuals just getting started.';
+      case 'pro': return 'For students, developers, and growing teams.';
       default: return 'Best plan for you.';
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!confirm('Are you sure you want to cancel your subscription? You will retain access until the end of your billing period.')) {
+      return;
+    }
+
+    try {
+      const response = await cancelSubscription();
+      setIsCancelled(true);
+      setCancelPeriodEnd(response.period_end || null);
+
+      if (currentSubscription) {
+        setCurrentSubscription({
+          ...currentSubscription,
+          cancel_at_period_end: true
+        });
+      }
+
+      alert(response.message);
+    } catch (error: any) {
+      alert(error.message || 'Failed to cancel subscription');
+    }
+  };
+
+  const handleResumeSubscription = async () => {
+    try {
+      const response = await resumeSubscription();
+      setIsCancelled(false);
+      setCancelPeriodEnd(null);
+
+      if (currentSubscription) {
+        setCurrentSubscription({
+          ...currentSubscription,
+          cancel_at_period_end: false
+        });
+      }
+
+      alert(response.message);
+    } catch (error: any) {
+      alert(error.message || 'Failed to resume subscription');
     }
   };
 
@@ -129,38 +172,34 @@ export function SubscriptionPage() {
 
                 <div className="flex flex-col sm:flex-row gap-3">
                   {currentPlan && currentPlan.price > 0 && (
-                    <button className="px-6 py-2.5 border border-gray-700 text-white rounded-lg hover:bg-[#0F0F0F] transition-colors cursor-pointer">
-                      Cancel Plan
-                    </button>
+                    !isCancelled && !currentSubscription?.cancel_at_period_end ? (
+                      <button
+                        onClick={handleCancelSubscription}
+                        className="px-6 py-2.5 border border-red-700 text-red-400 rounded-lg hover:bg-red-900/20 transition-colors cursor-pointer"
+                      >
+                        Cancel Plan
+                      </button>
+                    ) : (
+                      <div className="space-y-3 w-full">
+                        <div className="px-4 py-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                          <p className="text-yellow-400 text-sm">
+                            ⚠️ Your subscription will end on {cancelPeriodEnd ? new Date(cancelPeriodEnd).toLocaleDateString() : 'the end of your billing period'}.
+                            No payment will be deducted in the next cycle.
+                          </p>
+                        </div>
+                        <button
+                          onClick={handleResumeSubscription}
+                          className="px-6 py-2.5 border border-green-700 text-green-400 rounded-lg hover:bg-green-900/20 transition-colors cursor-pointer"
+                        >
+                          Resume Subscription
+                        </button>
+                      </div>
+                    )
                   )}
                 </div>
               </div>
             </div>
           </div>
-
-          {/* Auto-renewal Section - Only for paid plans */}
-          {currentPlan && currentPlan.price > 0 && (
-            <div className="bg-[#0F0F0F] border border-gray-800 rounded-xl p-4 sm:p-6 mb-8 sm:mb-12">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-white mb-1">Auto-renewal</h3>
-                  <p className="text-gray-400 text-sm">
-                    Automatically renew your subscription at the end of the billing cycle.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setAutoRenewal(!autoRenewal)}
-                  className={`relative w-14 h-8 rounded-full transition-colors ${autoRenewal ? 'bg-[#7001FE]' : 'bg-gray-700'
-                    }`}
-                >
-                  <div
-                    className={`absolute top-1 w-6 h-6 bg-white rounded-full transition-transform ${autoRenewal ? 'translate-x-7' : 'translate-x-1'
-                      }`}
-                  />
-                </button>
-              </div>
-            </div>
-          )}
 
           {/* Available Plans Section */}
           <div className="mb-8">
@@ -175,7 +214,7 @@ export function SubscriptionPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
               {plans.map((plan) => {
                 const isCurrent = currentPlan?.id === plan.id;
                 const priceDisplay = plan.price === 0 ? "0" : (plan.price / 100).toString();
@@ -232,20 +271,6 @@ export function SubscriptionPage() {
                   </div>
                 )
               })}
-            </div>
-          </div>
-
-          {/* Footer */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-8 border-t border-gray-800 gap-4">
-            <p className="text-gray-400 text-sm">Need help with your subscription?</p>
-            <div className="flex items-center gap-4">
-              <button className="text-[#7001FE] hover:text-[#5a01cc] transition-colors text-sm">
-                Contact Support
-              </button>
-              <button className="flex items-center gap-2 text-gray-300 hover:text-white transition-colors text-sm">
-                View Billing History
-                <ArrowRight size={16} />
-              </button>
             </div>
           </div>
         </div>

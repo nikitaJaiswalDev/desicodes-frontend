@@ -44,7 +44,7 @@ const Footer: React.FC = () => {
                 className="text-[23px] font-bold italic bg-[linear-gradient(80.32deg,#F83A3A_10%,#F13DD4_50%,#7000FF_90%)] bg-clip-text text-transparent leading-[1.3]"
                 style={{ WebkitBackgroundClip: "text" }}
               >
-                desicodes
+                <img src="/logo.png" alt="DesiCodes Logo" className="h-12 sm:h-16 w-auto" />
               </h3>
               <p className="text-[14px] text-gray-400 leading-5">
                 Break language barriers in programming.

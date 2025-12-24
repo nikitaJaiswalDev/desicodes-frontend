@@ -89,7 +89,7 @@ export function Sidebar() {
             to="/"
             className="block text-[23px] sidebarlogo font-bold italic leading-[1.3] bg-[linear-gradient(80.32deg,#F83A3A_10%,#F13DD4_50%,#7000FF_90%)] bg-clip-text text-transparent transition-all duration-300"
           >
-            desicodes
+            <img src="/logo.png" alt="DesiCodes Logo" className="h-12 sm:h-16 w-auto" />
           </Link>
         </div>
 

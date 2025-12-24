@@ -52,6 +52,12 @@ const Header: React.FC = () => {
       isActive: currentPath === "/pricing",
     },
     {
+      id: "ide",
+      label: "IDE",
+      href: "/ide",
+      isActive: currentPath === "/ide",
+    },
+    {
       id: "resources",
       label: "Resources",
       href: "/resources",
@@ -78,9 +84,9 @@ const Header: React.FC = () => {
           {/* Logo */}
           <Link
             to="/"
-            className="text-[20px] sm:text-[23px] justify-start font-bold italic leading-[1.3] bg-[linear-gradient(80.32deg,#F83A3A_10%,#F13DD4_50%,#7000FF_90%)] bg-clip-text text-transparent transition-all duration-300"
+            className="flex items-center transition-all duration-300 hover:opacity-80"
           >
-            desicodes
+            <img src="/logo.png" alt="DesiCodes Logo" className="h-12 sm:h-16 w-auto" />
           </Link>
 
           {/* Hamburger menu (mobile only) */}

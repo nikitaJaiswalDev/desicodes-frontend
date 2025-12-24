@@ -93,8 +93,8 @@ export function PricingPage() {
           </p>
         </div>
 
-        {/* Plans Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Plans Grid - Updated to 2 columns for Free and Pro plans */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {plans.map((plan) => {
             const isPopular = isMostPopular(plan.name);
             const priceDisplay = plan.price === 0 ? "0" : (plan.price / 100).toString();

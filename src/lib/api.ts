@@ -126,6 +126,8 @@ export type Subscription = {
   created_at: string;
   current_period_start: string;
   current_period_end: string;
+  cancel_at_period_end?: boolean;
+  cancelled_at?: string | null;
 };
 
 export async function getUserSubscriptions() {
@@ -174,7 +176,7 @@ export type RazorpayOrderResponse = {
 };
 
 export async function createRazorpayOrder(planId: number, currency = 'USD') {
-  return request<RazorpayOrderResponse>('/payments/razorpay/create-order', {
+  return request<RazorpayOrderResponse>('/payments/razorpay/create-subscription', {
     method: 'POST',
     headers: authHeader(),
     body: JSON.stringify({ plan_id: planId, currency }),
@@ -202,7 +204,7 @@ export type CodeRunResponse = {
 export async function executeCode(language: string, code: string) {
   return request<CodeRunResponse>('/execute', {
     method: 'POST',
-    headers: authHeader(),
+    headers: authHeader(), // Always include auth header (will be empty if no token)
     body: JSON.stringify({ language, code }),
   });
 }
@@ -238,3 +240,50 @@ export async function sendContactMessage(payload: { name: string; email: string;
     // But my `request` helper sends auth header if exists.
   });
 }
+
+export async function cancelSubscription() {
+  return request<{
+    status: string;
+    message: string;
+    period_end?: string;
+    access_until?: string;
+  }>('/subscriptions/cancel', {
+    method: 'POST',
+    headers: authHeader(),
+  });
+}
+
+export async function resumeSubscription() {
+  return request<{
+    status: string;
+    message: string;
+  }>('/subscriptions/resume', {
+    method: 'POST',
+    headers: authHeader(),
+  });
+}
+
+export async function downloadInvoice(invoiceId: number) {
+  return request<{ invoice_url: string; invoice_id: number }>(`/invoices/download/${invoiceId}`, {
+    method: 'GET',
+    headers: authHeader(),
+  });
+}
+
+export async function getCurrentPaymentMethod() {
+  return request<{
+    has_payment_method: boolean;
+    payment_method?: {
+      type: string;
+      card_brand?: string;
+      card_last4?: string;
+      card_exp_month?: number;
+      card_exp_year?: number;
+    };
+    message?: string;
+  }>('/payment-method/current', {
+    method: 'GET',
+    headers: authHeader(),
+  });
+}
+

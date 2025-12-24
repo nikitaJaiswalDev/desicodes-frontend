@@ -1,6 +1,7 @@
 import React from "react";
 import AboutHero from "../components/sections/about/AboutHero";
-import AboutOurSpace from "../components/sections/about/AboutOurSpace";
+// import AboutOurSpace from "../components/sections/about/AboutOurSpace";
+import TeamProfile from "../components/sections/about/TeamProfile";
 // import AboutPressKit from "../components/sections/about/AboutPressKit";
 
 const AboutPage: React.FC = () => {
@@ -8,7 +9,8 @@ const AboutPage: React.FC = () => {
     <div className="min-h-screen bg-[#05010d] text-white">
       <main>
         <AboutHero />
-        <AboutOurSpace />
+        {/* <AboutOurSpace /> */}
+        <TeamProfile />
         {/* <AboutPressKit /> */}
       </main>
     </div>

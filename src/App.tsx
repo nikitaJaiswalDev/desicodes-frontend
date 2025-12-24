@@ -34,7 +34,6 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }>
             <Route path="dashboard" element={<DashboardPage />} />
-            <Route path="ide" element={<IdePage />} />
             <Route path="certifications" element={<CertificationsPage />} />
           </Route>
 
@@ -63,6 +62,7 @@ const App: React.FC = () => {
             <Route path="community" element={<CommunityPage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="pricing" element={<PricingPage />} />
+            <Route path="ide" element={<IdePage />} />
             <Route path="privacy-policy" element={<PrivacyPolicyPage />} />
             <Route path="terms" element={<TermsPage />} />
 

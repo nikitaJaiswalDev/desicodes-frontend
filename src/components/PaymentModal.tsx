@@ -63,11 +63,9 @@ export function PaymentModal({ isOpen, onClose, plan }: PaymentModalProps) {
             // 3. Configure Razorpay checkout options
             const options = {
                 key: order.key_id,
-                amount: order.amount,
-                currency: order.currency,
+                subscription_id: order.order_id,  // This is subscription_id from backend
                 name: 'DesiCodes',
-                description: `${plan.name} Plan Subscription`,
-                order_id: order.order_id,
+                description: `${plan.name} Plan - Monthly Subscription`,
                 prefill: {
                     name: user?.username || '',
                     email: user?.email || '',
@@ -79,7 +77,7 @@ export function PaymentModal({ isOpen, onClose, plan }: PaymentModalProps) {
                     // Payment successful, verify it
                     try {
                         await verifyRazorpayPayment({
-                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_order_id: response.razorpay_subscription_id,  // subscription_id
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
                         });

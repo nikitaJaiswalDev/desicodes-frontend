@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Button from "../../UI/Button";
 
 const CommunityHero: React.FC = () => {
   const navigate = useNavigate();
@@ -37,17 +38,7 @@ const CommunityHero: React.FC = () => {
 
         {/* CTA Button */}
         <div className="flex justify-center">
-          <button
-            onClick={handleGetStarted}
-            className="px-8 py-3
-             bg-[#FFFFFFE5]
-            border-[#0000000D]
-             shadow-[0_0_0_3px_#FFFFFF33]
-             text-black font-medium rounded-md
-             text-sm cursor-pointer hover:bg-white transition-colors"
-          >
-            Get started today
-          </button>
+          <Button onClick={handleGetStarted}>Get Started</Button>
         </div>
       </div>
     </section>
