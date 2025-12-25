@@ -158,7 +158,7 @@ export function SubscriptionPage() {
                     </div>
                     {currentPlan && (
                       <p className="text-gray-400 text-sm mb-1">
-                        ${currentPlan.price === 0 ? '0' : (currentPlan.price / 100).toFixed(2)} / month • Billed monthly
+                        {currentPlan.currency === 'INR' ? '₹' : '$'}{currentPlan.price === 0 ? '0' : (currentPlan.price / 100).toFixed(2)} / month • Billed monthly
                       </p>
                     )}
                     {currentPlan && currentPlan.price > 0 && (
@@ -238,7 +238,7 @@ export function SubscriptionPage() {
                     <div className="mb-6">
                       <h3 className="text-white text-xl mb-2">{plan.name}</h3>
                       <div className="flex items-baseline gap-1 mb-2">
-                        <span className="text-white text-4xl">${priceDisplay}</span>
+                        <span className="text-white text-4xl">{plan.currency === 'INR' ? '₹' : '$'}{priceDisplay}</span>
                         <span className="text-gray-400 text-sm">{period}</span>
                       </div>
                       <p className="text-gray-400 text-sm">{getPlanDescription(plan.name)}</p>

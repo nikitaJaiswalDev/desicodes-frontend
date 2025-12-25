@@ -190,7 +190,7 @@ export function BillingPage() {
 
                 <div className="mb-6">
                   <div className="flex items-baseline gap-1 mb-2">
-                    <span className="text-white text-4xl">${plan?.price ? (plan.price / 100).toFixed(0) : "0"}</span>
+                    <span className="text-white text-4xl">{plan?.currency === 'INR' ? '₹' : '$'}{plan?.price ? (plan.price / 100).toFixed(0) : "0"}</span>
                     <span className="text-gray-500 text-sm">/month</span>
                   </div>
                   {subscription && plan && plan.price > 0 && (
