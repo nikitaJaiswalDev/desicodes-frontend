@@ -42,16 +42,16 @@ const AdminLanguagesPage: React.FC = () => {
         }
     };
 
-    const handleDeleteLanguage = async (languageId: number, languageName: string) => {
-        if (window.confirm(`Are you sure you want to delete "${languageName}"?`)) {
-            try {
-                await adminApi.deleteLanguage(languageId);
-                fetchLanguages();
-            } catch (err: any) {
-                alert(err?.response?.data?.detail || "Failed to delete language");
-            }
-        }
-    };
+    // const handleDeleteLanguage = async (languageId: number, languageName: string) => {
+    //     if (window.confirm(`Are you sure you want to delete "${languageName}"?`)) {
+    //         try {
+    //             await adminApi.deleteLanguage(languageId);
+    //             fetchLanguages();
+    //         } catch (err: any) {
+    //             alert(err?.response?.data?.detail || "Failed to delete language");
+    //         }
+    //     }
+    // };
 
     // Pagination
     const indexOfLastItem = currentPage * itemsPerPage;
