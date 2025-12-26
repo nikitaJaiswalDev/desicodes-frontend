@@ -4,7 +4,7 @@ export const setupInterceptors = () => {
   // Request Interceptor
   api.interceptors.request.use(
     (config) => {
-      const token = localStorage.getItem("token");
+      const token = localStorage.getItem("dc_token");
 
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
@@ -21,7 +21,8 @@ export const setupInterceptors = () => {
     (error) => {
       if (error.response?.status === 401) {
         console.log("Unauthorized - Token expired");
-        localStorage.removeItem("token");
+        localStorage.removeItem("dc_token");
+        localStorage.removeItem("dc_user");
         window.location.href = "/login";
       }
 

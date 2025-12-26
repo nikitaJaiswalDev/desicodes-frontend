@@ -38,7 +38,11 @@ async function request<T>(path: string, options: RequestInit & { skipAuthRedirec
 }
 
 export async function registerUser(payload: RegisterPayload) {
-  const result = await request<any>('/auth/register', {
+  const result = await request<{
+    access_token: string;
+    token_type: string;
+    user: { id: number; username: string; email: string; user_type: string; is_active: boolean };
+  }>('/auth/register', {
     method: 'POST',
     body: JSON.stringify(payload),
   });
@@ -59,7 +63,7 @@ export async function loginUser(payload: LoginPayload) {
   const result = await request<{
     access_token: string;
     token_type: string;
-    user: { id: number; username: string; email: string; is_active: boolean };
+    user: { id: number; username: string; email: string; user_type: string; is_active: boolean };
   }>('/auth/login', {
     method: 'POST',
     body: JSON.stringify(payload),
@@ -80,7 +84,7 @@ export async function socialLogin(payload: { provider: string; email?: string; n
   const result = await request<{
     access_token: string;
     token_type: string;
-    user: { id: number; username: string; email: string; is_active: boolean };
+    user: { id: number; username: string; email: string; user_type: string; is_active: boolean };
   }>('/auth/social-login', {
     method: 'POST',
     body: JSON.stringify(payload),

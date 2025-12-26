@@ -72,11 +72,23 @@ const AuthPage: React.FC = () => {
         <p className="text-[#8a8693] text-sm mb-4">or</p>
 
         {mode === "login" ? (
-          <LoginForm onSuccess={() => navigate("/dashboard")} />
+          <LoginForm onSuccess={(res) => {
+            // Redirect based on user type (backend returns uppercase)
+            if (res?.user?.user_type === "ADMIN") {
+              navigate("/admin/dashboard");
+            } else {
+              navigate("/dashboard");
+            }
+          }} />
         ) : (
           <RegisterForm onSuccess={(res) => {
             if (res && res.access_token) {
-              navigate("/dashboard");
+              // Redirect based on user type (backend returns uppercase)
+              if (res?.user?.user_type === "ADMIN") {
+                navigate("/admin/dashboard");
+              } else {
+                navigate("/dashboard");
+              }
             } else {
               setMode("login");
             }

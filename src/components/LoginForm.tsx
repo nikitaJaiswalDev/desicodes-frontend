@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { loginUser } from "../lib/api";
 
 type Props = {
-  onSuccess?: (result: { access_token: string; user: { id: number; username: string; email: string } }) => void;
+  onSuccess?: (result: { access_token: string; user: { id: number; username: string; email: string; user_type?: string } }) => void;
 };
 
 const LoginForm: React.FC<Props> = ({ onSuccess }) => {
@@ -28,6 +28,8 @@ const LoginForm: React.FC<Props> = ({ onSuccess }) => {
     setLoading(true);
     try {
       const res = await loginUser({ email: email.trim(), password });
+      console.log({ res });
+
       onSuccess?.(res as any);
     } catch (err: any) {
       setError(err?.message || "Login failed");
@@ -40,38 +42,36 @@ const LoginForm: React.FC<Props> = ({ onSuccess }) => {
     <form onSubmit={onSubmit} className="w-full">
       <div className="mb-3">
         <input
-        type="email"
-        placeholder="Email address"
-        value={email}
-        onChange={(e) => {
-          setEmail(e.target.value);
-          if (fieldErrors.email) setFieldErrors((fe) => ({ ...fe, email: undefined }));
-          if (error) setError(null);
-        }}
-        aria-invalid={!!fieldErrors.email}
-        className={`w-full rounded-lg py-3 bg-[#120E19] border px-4 text-white placeholder:text-sm placeholder-[#FFFFFF33] focus:outline-none ${
-          fieldErrors.email ? "border-red-500" : "border-[#FFFFFF0D]"
-        }`}
-      />
+          type="email"
+          placeholder="Email address"
+          value={email}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (fieldErrors.email) setFieldErrors((fe) => ({ ...fe, email: undefined }));
+            if (error) setError(null);
+          }}
+          aria-invalid={!!fieldErrors.email}
+          className={`w-full rounded-lg py-3 bg-[#120E19] border px-4 text-white placeholder:text-sm placeholder-[#FFFFFF33] focus:outline-none ${fieldErrors.email ? "border-red-500" : "border-[#FFFFFF0D]"
+            }`}
+        />
         {fieldErrors.email && (
           <div className="text-red-400 text-xs mt-1">{fieldErrors.email}</div>
         )}
       </div>
       <div className="mb-4">
         <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => {
-          setPassword(e.target.value);
-          if (fieldErrors.password) setFieldErrors((fe) => ({ ...fe, password: undefined }));
-          if (error) setError(null);
-        }}
-        aria-invalid={!!fieldErrors.password}
-        className={`w-full rounded-lg py-3 bg-[#120E19] border px-4 text-white placeholder:text-sm placeholder-[#FFFFFF33] focus:outline-none ${
-          fieldErrors.password ? "border-red-500" : "border-[#FFFFFF0D]"
-        }`}
-      />
+          type="password"
+          placeholder="Password"
+          value={password}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (fieldErrors.password) setFieldErrors((fe) => ({ ...fe, password: undefined }));
+            if (error) setError(null);
+          }}
+          aria-invalid={!!fieldErrors.password}
+          className={`w-full rounded-lg py-3 bg-[#120E19] border px-4 text-white placeholder:text-sm placeholder-[#FFFFFF33] focus:outline-none ${fieldErrors.password ? "border-red-500" : "border-[#FFFFFF0D]"
+            }`}
+        />
         {fieldErrors.password && (
           <div className="text-red-400 text-xs mt-1">{fieldErrors.password}</div>
         )}
