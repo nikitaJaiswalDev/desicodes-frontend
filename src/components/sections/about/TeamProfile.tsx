@@ -16,9 +16,13 @@ const TeamProfile: React.FC = () => {
           <h2 className="font-bold text-4xl md:text-5xl lg:text-6xl text-white mb-6 tracking-tight">
             Meet Our <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">Founder</span>
           </h2>
-          <p className="text-xl text-white/40 leading-relaxed max-w-2xl mx-auto">
+          {/* <p className="text-xl text-white/40 leading-relaxed max-w-2xl mx-auto">
             Passionate individuals dedicated to breaking language barriers in programming
-          </p>
+          </p> */}
+          <p className="text-xl text-white/40 leading-relaxed max-w-2xl mx-auto whitespace-nowrap">
+  Passionate individuals dedicated to breaking language barriers in programming
+</p>
+
         </div>
 
         {/* Team Member Profile - Huma */}
@@ -100,7 +104,7 @@ const TeamProfile: React.FC = () => {
                           <div className="w-1.5 h-1.5 rounded-full bg-pink-400 mt-1.5 flex-shrink-0" />
                           <div>
                             <p className="text-xs text-white font-medium leading-relaxed">AI-Driven Predictive Modelling for Sustainable Data Centres: Translating Nordic Practices to Northeast India</p>
-                            <p className="text-[10px] text-white/50 mt-0.5 leading-relaxed">Accepted for 13th Eastern Himalayan Naturenomics™ Forum 2025 organised by Nalipara Foundation › Balipara Foundation along with IIT Guwahati, Cotton University and Royal Global University</p>
+                            <p className="text-[10px] text-white/50 mt-0.5 leading-relaxed">Accepted for 13th Eastern Himalayan Naturenomics™ Forum 2025 organised by Balipara Foundation along with IIT Guwahati, Cotton University and Royal Global University</p>
                           </div>
                         </div>
                       </div>
@@ -176,7 +180,7 @@ const TeamProfile: React.FC = () => {
                         Programming promises empowerment, yet for millions of students, it comes with an invisible barrier—English. That extra step of translation doesn’t just slow learning; it often stops it altogether.
                       </p>
                       <p className="mb-6">
-                        DesiCodes is my attempt to remove that pause.
+                        DesiCodes is our attempt to remove that pause.
                       </p>
                       <p className="mb-6">
                         We are building tools that allow learners to write code in their own languages—Assamese, Meitei, Khasi, Bodo, Garo, Mizo, Bangla, and more—while remaining fully compatible with modern programming ecosystems.
