@@ -57,18 +57,18 @@ const Header: React.FC = () => {
       href: "/ide",
       isActive: currentPath === "/ide",
     },
-    // {
-    //   id: "resources",
-    //   label: "Resources",
-    //   href: "/resources",
-    //   isActive: currentPath === "/resources",
-    // },
-    // {
-    //   id: "community",
-    //   label: "Community",
-    //   href: "/community",
-    //   isActive: currentPath === "/community",
-    // },
+    {
+      id: "resources",
+      label: "Resources",
+      href: "/resources",
+      isActive: currentPath === "/resources",
+    },
+    {
+      id: "community",
+      label: "Community",
+      href: "/community",
+      isActive: currentPath === "/community",
+    },
     {
       id: "contact",
       label: "Contact",
