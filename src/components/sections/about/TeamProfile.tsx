@@ -1,4 +1,5 @@
 import React from "react";
+import { Linkedin } from "lucide-react";
 
 const TeamProfile: React.FC = () => {
   return (
@@ -99,7 +100,7 @@ const TeamProfile: React.FC = () => {
                           <div className="w-1.5 h-1.5 rounded-full bg-pink-400 mt-1.5 flex-shrink-0" />
                           <div>
                             <p className="text-xs text-white font-medium leading-relaxed">AI-Driven Predictive Modelling for Sustainable Data Centres: Translating Nordic Practices to Northeast India</p>
-                            <p className="text-[10px] text-white/50 mt-0.5 leading-relaxed">Accepted for 13th Eastern Himalayan Naturenomics™ Forum 2025 organised by Nalipara Foundation along with IIT Guwahati, Cotton University and Royal Global University</p>
+                            <p className="text-[10px] text-white/50 mt-0.5 leading-relaxed">Accepted for 13th Eastern Himalayan Naturenomics™ Forum 2025 organised by Nalipara Foundation › Balipara Foundation along with IIT Guwahati, Cotton University and Royal Global University</p>
                           </div>
                         </div>
                       </div>
@@ -113,19 +114,19 @@ const TeamProfile: React.FC = () => {
                       <div className="space-y-3">
                         <div className="flex items-start gap-3 text-xs text-white/60">
                           <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
-                          <span>Chairman's Medal for academic excellence (2025)</span>
+                          <span>Chairman's Medal for academic excellence</span>
                         </div>
                         <div className="flex items-start gap-3 text-xs text-white/60">
                           <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5 flex-shrink-0" />
-                          <span>Gems of Northeast Award (2025) - Times Now</span>
+                          <span>Gems of Northeast - Times Now</span>
                         </div>
                         <div className="flex items-start gap-3 text-xs text-white/60">
                           <div className="w-1.5 h-1.5 rounded-full bg-pink-400 mt-1.5 flex-shrink-0" />
-                          <span>Voice of the Youths Award (2025) - Radio Gup-Shup</span>
+                          <span>Voice of the Youths - Radio Gup-Shup</span>
                         </div>
                         <div className="flex items-start gap-3 text-xs text-white/60">
                           <div className="w-1.5 h-1.5 rounded-full bg-pink-400 mt-1.5 flex-shrink-0" />
-                          <span>Young Engineering Mind of the Year - SPM</span>
+                          <span>Young Engineering Mind of the Year - SPM & Lalan's</span>
                         </div>
                       </div>
                     </div>
@@ -197,11 +198,21 @@ const TeamProfile: React.FC = () => {
 
                   {/* Signature */}
                   <div className="pt-8 border-t border-white/10 flex items-center justify-between">
-                    <div>
-                      <p className="font-handwriting text-3xl text-blue-300 mb-2 transform -rotate-2 origin-left inline-block">Huma Abia Kanta</p>
-                      <p className="text-sm text-white/50 uppercase tracking-widest font-medium">Founder, DesiCodes</p>
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <p className="font-handwriting text-3xl text-blue-300 mb-2 transform -rotate-2 origin-left inline-block">Huma Abia Kanta</p>
+                        <p className="text-sm text-white/50 uppercase tracking-widest font-medium">Founder, DesiCodes</p>
+                      </div>
+                      <a
+                        href="https://www.linkedin.com/in/humaabiakanta"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 rounded-full bg-white/5 border border-white/10 text-white/60 hover:text-blue-400 hover:bg-white/10 hover:border-blue-400/30 transition-all duration-300"
+                        aria-label="Connect on LinkedIn"
+                      >
+                        <Linkedin className="w-5 h-5" />
+                      </a>
                     </div>
-                    {/* Optional: Add a small logo or icon here if needed */}
                   </div>
                 </div>
 

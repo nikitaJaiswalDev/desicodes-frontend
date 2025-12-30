@@ -40,7 +40,7 @@ const HomePage: React.FC = () => {
 
         {/* Editor with padding */}
         <div className="px-4 md:px-8 lg:px-16">
-          <Editor bg={false} />
+          <Editor bg={false} className="h-[400px] md:h-[500px] rounded-xl border border-white/10" />
         </div>
 
         {/* Newsletter/CTA Section */}

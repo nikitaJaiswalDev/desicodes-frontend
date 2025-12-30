@@ -16,7 +16,7 @@ import { executeCode } from "../../../lib/api";
 import MonacoEditor from "@monaco-editor/react";
 
 
-const Editor = ({ bg }: { bg?: boolean }) => {
+const Editor = ({ bg, className }: { bg?: boolean; className?: string }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const defaultSnippets: Record<string, string> = {
@@ -307,7 +307,7 @@ tawp`
   };
 
   return (
-    <div className={`w-full ${isFullScreen ? 'fixed inset-0 z-50' : 'h-screen'} ${bg && !isFullScreen && "bg-black"} flex flex-col overflow-hidden`}>
+    <div className={`w-full ${isFullScreen ? 'fixed inset-0 z-50' : className || 'h-screen'} ${bg && !isFullScreen && "bg-black"} flex flex-col overflow-hidden`}>
       {/* IDE Container */}
       <div className={`flex-1 flex flex-col ${isFullScreen ? '' : 'w-full'} bg-black overflow-hidden`}>
 
