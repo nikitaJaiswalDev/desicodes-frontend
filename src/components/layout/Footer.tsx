@@ -17,8 +17,8 @@ const socialLinks: SocialLink[] = [
 
 const platformLinks = [
   { label: "Languages", href: "/languages" },
-  { label: "Learn & Resources", href: "/resources" },
-  { label: "Community", href: "/community" },
+  // { label: "Learn & Resources", href: "/resources" },
+  // { label: "Community", href: "/community" },
 ];
 
 const companyLinks = [
